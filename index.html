@@ -3,756 +3,469 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZERIQ ADVISORY</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <title>ZERIQ ADVISORY | Private Architecture</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
             --bone: #F7F5F0;
-            --black: #0D0D0D;
-            --grey: #666666;
-            --lime: #B8E04A;
-            --red: #D32F2F;
+            --obsidian: #1A1A1A;
+            --charcoal: #4A4A4A;
+            --champagne: #C5A059;
+            --glass-white: rgba(247, 245, 240, 0.4);
+            /* iOS 26 Spring Easing */
+            --spring: cubic-bezier(0.4, 0, 0.2, 1);
+            --liquid-ease: cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         html {
             scroll-behavior: smooth;
-            scroll-snap-type: y mandatory;
+            background: var(--bone);
         }
 
         body {
             font-family: 'DM Mono', monospace;
-            background: var(--bone);
-            color: var(--black);
+            color: var(--obsidian);
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        ::selection {
-            background: var(--lime);
-            color: var(--black);
-        }
-
-        nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            z-index: 100;
-            padding: 20px 48px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(247, 245, 240, 0.95);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(0,0,0,0.06);
-        }
-
-        .logo {
-            font-size: 11px;
-            letter-spacing: 4px;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 36px;
-        }
-
-        .nav-links a {
-            font-size: 10px;
-            letter-spacing: 2px;
-            color: var(--grey);
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        .nav-links a:hover {
-            color: var(--black);
-        }
-
-        section {
-            min-height: 100vh;
-            scroll-snap-align: start;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 80px 48px;
-            position: relative;
-        }
-
-        .content-wrapper {
-            max-width: 1200px;
-            width: 100%;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 80px;
-            align-items: center;
-        }
-
-        .content-left {
-            max-width: 480px;
-        }
-
-        .content-right {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .section-label {
-            font-size: 9px;
-            letter-spacing: 4px;
-            color: var(--grey);
-            margin-bottom: 16px;
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        .headline {
-            font-family: 'Playfair Display', serif;
-            font-weight: 900;
-            font-size: clamp(1.8rem, 5vw, 3.5rem);
-            line-height: 1.1;
-            color: var(--black);
-            margin-bottom: 20px;
-            opacity: 0;
-            transform: translateY(30px);
-        }
-
-        .sub-headline {
-            font-size: 12px;
-            letter-spacing: 2px;
-            color: var(--grey);
-            text-transform: uppercase;
-            line-height: 1.8;
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        .body-text {
-            font-size: 13px;
-            line-height: 2;
-            color: var(--grey);
-            margin-top: 28px;
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        .accent-line {
-            width: 48px;
-            height: 2px;
-            background: var(--lime);
-            margin: 24px 0;
-            opacity: 0;
-            transform: scaleX(0);
-            transform-origin: left;
-        }
-
-        .globe-container {
-            width: 100%;
-            max-width: 500px;
-            aspect-ratio: 1;
-        }
-
-        #globe-canvas {
-            width: 100%;
-            height: 100%;
-        }
-
-        .scroll-indicator {
-            position: absolute;
-            bottom: 32px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 9px;
-            letter-spacing: 2px;
-            color: var(--grey);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .scroll-indicator::before {
-            content: '';
-            width: 1px;
-            height: 32px;
-            background: linear-gradient(to bottom, var(--lime), transparent);
-            animation: scrollPulse 2s ease-in-out infinite;
-        }
-
-        @keyframes scrollPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-
-        .terminal-tag {
-            position: absolute;
-            right: 32px;
-            top: 80px;
-            font-size: 8px;
-            letter-spacing: 2px;
-            color: rgba(0,0,0,0.08);
-            writing-mode: vertical-rl;
-        }
-
-        .grid-3 {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-            margin-top: 40px;
-            opacity: 0;
-            transform: translateY(30px);
-        }
-
-        .pillar {
-            padding-left: 16px;
-            border-left: 2px solid var(--lime);
-        }
-
-        .pillar-num {
-            font-size: 9px;
-            color: var(--lime);
-            margin-bottom: 10px;
-            letter-spacing: 2px;
-        }
-
-        .pillar-title {
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--black);
-            margin-bottom: 6px;
-        }
-
-        .pillar-desc {
-            font-size: 11px;
-            line-height: 1.7;
-            color: var(--grey);
-        }
-
-        .ticker-wrap {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
+        /* Liquid Glass Background */
+        #liquid-bg {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1; pointer-events: none;
+            background: 
+                radial-gradient(circle at 0% 0%, rgba(197, 160, 89, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(26, 26, 26, 0.03) 0%, transparent 50%),
+                var(--bone);
+            transition: background 1s var(--liquid-ease);
             overflow: hidden;
-            background: var(--black);
-            padding: 12px 0;
         }
 
-        .ticker {
-            display: flex;
-            white-space: nowrap;
-            animation: tickerSlide 30s linear infinite;
-        }
-
-        .ticker-item {
-            font-size: 10px;
-            letter-spacing: 2px;
-            color: var(--bone);
-            padding: 0 32px;
-        }
-
-        .ticker-sep {
-            color: var(--lime);
-        }
-
-        @keyframes tickerSlide {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-
-        #access .content-wrapper {
-            display: flex;
-            flex-direction: column;
-            text-align: center;
-        }
-
-        .contact-email {
-            font-size: 16px;
-            letter-spacing: 2px;
-            color: var(--black);
-            text-decoration: none;
-            margin: 32px 0;
-            padding: 14px 28px;
-            border: 2px solid var(--black);
-            transition: all 0.3s;
+        /* iOS Glass Aurora Effect */
+        .aurora {
+            position: absolute;
+            top: 0%; left: 50%;
+            width: 70vw; height: 70vh;
+            background: radial-gradient(ellipse at center, rgba(255, 248, 230, 0.8) 0%, rgba(255, 255, 255, 0) 65%);
+            border-radius: 50%;
+            filter: blur(120px);
+            transform: translate(-50%, -30%);
+            will-change: transform, opacity;
+            transition: transform 0.6s var(--liquid-ease), opacity 0.8s ease;
+            pointer-events: none;
             opacity: 0;
-            transform: translateY(20px);
         }
 
-        .contact-email:hover {
-            background: var(--lime);
-            border-color: var(--lime);
+        /* iOS-Style Glass Nav */
+        nav {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 1200px; z-index: 100;
+            padding: 1.2rem 2.5rem; display: flex; justify-content: space-between; align-items: center;
+            background: var(--glass-white);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 100px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.03);
         }
 
-        .disclaimer {
-            font-size: 10px;
-            line-height: 2;
-            max-width: 440px;
-            color: var(--grey);
-            opacity: 0;
-            transform: translateY(20px);
+        .logo { font-family: 'Playfair Display', serif; font-size: 14px; letter-spacing: 4px; font-weight: 700; }
+        .nav-links { display: flex; gap: 30px; }
+        .nav-links a { 
+            font-size: 10px; letter-spacing: 2px; color: var(--charcoal); 
+            text-decoration: none; transition: opacity 0.3s;
+        }
+        .nav-links a:hover { opacity: 0.5; }
+
+        /* Sections */
+        section {
+            min-height: 100vh; width: 100vw;
+            display: flex; align-items: center; justify-content: center;
+            position: relative; padding: 120px 10vw;
         }
 
-        section.active .section-label,
-        section.active .headline,
-        section.active .sub-headline,
-        section.active .body-text,
-        section.active .accent-line,
-        section.active .grid-3,
-        section.active .contact-email,
-        section.active .disclaimer {
-            opacity: 1;
-            transform: translateY(0);
-            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        .grid-layout {
+            display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 5vw;
+            width: 100%; max-width: 1300px; align-items: center;
         }
 
-        section.active .accent-line {
-            transform: scaleX(1);
-            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s;
+        /* Glass Content Cards */
+        .glass-card {
+            padding: 40px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 40px;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: transform 0.8s var(--liquid-ease);
         }
 
-        section.active .section-label { transition-delay: 0.1s; }
-        section.active .headline { transition-delay: 0.2s; }
-        section.active .sub-headline { transition-delay: 0.3s; }
-        section.active .body-text { transition-delay: 0.4s; }
-        section.active .grid-3 { transition-delay: 0.5s; }
-        section.active .contact-email { transition-delay: 0.4s; }
-        section.active .disclaimer { transition-delay: 0.5s; }
+        /* Typography */
+        .label {
+            font-size: 9px; letter-spacing: 4px; color: var(--champagne);
+            margin-bottom: 24px; text-transform: uppercase; font-weight: 500;
+        }
+        h1 {
+            font-family: 'Playfair Display', serif; font-weight: 600;
+            font-size: clamp(2.5rem, 5vw, 4.2rem); line-height: 1.1;
+            color: var(--obsidian); margin-bottom: 30px; letter-spacing: -0.03em;
+        }
+        p {
+            font-size: 13px; line-height: 2.2; color: var(--charcoal);
+            font-weight: 300; max-width: 480px;
+        }
+
+        /* Interactive Elements */
+        .accent-line {
+            width: 0; height: 1px; background: var(--champagne);
+            margin: 30px 0; transition: width 1.5s var(--liquid-ease);
+        }
+
+        /* Globe Canvas */
+        .visual { position: relative; width: 100%; aspect-ratio: 1; z-index: 5; }
+        #globe-canvas { 
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; 
+            filter: drop-shadow(0 20px 50px rgba(0,0,0,0.05)); z-index: 0; pointer-events: none;
+        }
+
+        /* Animations */
+        .fade-up {
+            opacity: 0; transform: translateY(40px) scale(0.98);
+            transition: all 1.2s var(--liquid-ease);
+        }
+        section.active .fade-up { opacity: 1; transform: translateY(0) scale(1); }
+        section.active .accent-line { width: 80px; }
+        section.active .fade-up.delay-1 { transition-delay: 0.1s; }
+        section.active .fade-up.delay-2 { transition-delay: 0.2s; }
+
+        /* Pillar Grid for Philosophy */
+        .pillar-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px; margin-top: 40px;
+        }
+        .pillar {
+            background: rgba(255,255,255,0.2);
+            padding: 30px; border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.4);
+            transition: all 0.4s var(--liquid-ease);
+        }
+        .pillar:hover { background: rgba(255,255,255,0.5); transform: translateY(-5px); }
+        .pillar h3 { font-family: 'Playfair Display', serif; font-size: 14px; margin-bottom: 12px; }
+        .pillar p { font-size: 11px; line-height: 1.8; }
+
+        /* Email Button */
+        .email-btn {
+            display: inline-block; padding: 20px 40px;
+            background: var(--obsidian); color: var(--bone);
+            text-decoration: none; border-radius: 100px;
+            font-size: 11px; letter-spacing: 3px;
+            transition: all 0.4s var(--liquid-ease);
+            border: 1px solid transparent;
+        }
+        .email-btn:hover { 
+            background: transparent; color: var(--champagne); 
+            border-color: var(--champagne); transform: scale(1.05);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(197, 160, 89, 0.2), inset 0 0 10px rgba(197, 160, 89, 0.1);
+        }
 
         @media (max-width: 900px) {
-            .content-wrapper {
-                grid-template-columns: 1fr;
-                gap: 48px;
-            }
-
-            .content-right {
-                order: -1;
-            }
-
-            .globe-container {
-                max-width: 320px;
-            }
-
-            .content-left {
-                max-width: 100%;
-                text-align: center;
-            }
-
-            .accent-line {
-                margin: 24px auto;
-            }
-
-            .grid-3 {
-                grid-template-columns: 1fr;
-            }
-
-            nav {
-                padding: 16px 24px;
-            }
-
-            .nav-links {
-                gap: 20px;
-            }
-
-            .nav-links a {
-                font-size: 9px;
-            }
+            .grid-layout { grid-template-columns: 1fr; text-align: center; }
+            nav { width: 95%; padding: 1rem; }
+            .nav-links { display: none; }
+            .visual { order: -1; max-width: 300px; margin: 0 auto; }
+            p { margin: 0 auto; }
+            .pillar-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
+
+    <div id="liquid-bg">
+        <canvas id="globe-canvas"></canvas>
+        <div class="aurora" id="scroll-aurora"></div>
+    </div>
+
     <nav>
-        <div class="logo">ZERIQ ADVISORY</div>
+        <div class="logo">ZERIQ ADVISORY.</div>
         <div class="nav-links">
             <a href="#home">HOME</a>
-            <a href="#about">ABOUT</a>
+            <a href="#architecture">ARCHITECTURE</a>
             <a href="#philosophy">PHILOSOPHY</a>
-            <a href="#standard">THE STANDARD</a>
+            <a href="#mandate">MANDATE</a>
             <a href="#access">ACCESS</a>
         </div>
     </nav>
 
-    <section id="home">
-        <div class="content-wrapper">
-            <div class="content-left">
-                <p class="section-label">GLOBAL EXECUTION</p>
-                <h1 class="headline">THE END OF THE EQUATION.</h1>
-                <p class="sub-headline">Complex global friction meets absolute finality.</p>
+    <section id="home" class="active">
+        <div class="grid-layout">
+            <div class="content">
+                <p class="label fade-up">01 — Global Resolution</p>
+                <h1 class="fade-up delay-1">THE ARCHITECTURE<br>OF FINALITY.</h1>
+                <div class="accent-line delay-2"></div>
+                <p class="fade-up delay-2">Zeriq Advisory operates as a sovereign node for cross-border capital and industrial infrastructure. We do not provide opinions; we execute the final equation.</p>
             </div>
-            <div class="content-right">
-                <div class="globe-container">
-                    <canvas id="globe-canvas"></canvas>
-                </div>
+            <div class="visual">
             </div>
         </div>
-        <div class="scroll-indicator">SCROLL</div>
     </section>
 
-    <section id="about">
-        <span class="terminal-tag">SYS::UNIVERSAL_ARCHITECTURE.EXE</span>
-        <div class="content-wrapper">
-            <div class="content-left">
-                <p class="section-label">THE UNIVERSAL SOLVENT</p>
-                <h1 class="headline">UNIVERSAL ARCHITECTURE.</h1>
-                <div class="accent-line"></div>
-                <p class="body-text">We solve for the variable. Industry and geography are irrelevant; the mechanics of closure are universal. Zeriq Advisory provides the architectural finality of a result where others provide opinions.</p>
+    <section id="architecture">
+        <div class="grid-layout">
+            <div class="content">
+                <p class="label fade-up">02 — The Universal Solvent</p>
+                <h1 class="fade-up delay-1">UNIVERSAL<br>ARCHITECTURE.</h1>
+                <div class="accent-line delay-2"></div>
+                <p class="fade-up delay-2">Architecture transcends geography. We apply a singular standard of closure to the world’s most intricate industrial equations. Where others manage process, we engineer finality. We do not navigate friction; we dissolve it.</p>
             </div>
-            <div class="content-right">
-                <div class="globe-container">
-                    <canvas id="globe-canvas-2"></canvas>
+            <div class="visual">
                 </div>
-            </div>
-        </div>
-        <div class="ticker-wrap">
-            <div class="ticker">
-                <span class="ticker-item">GOVERNMENT TENDERS<span class="ticker-sep"> //</span></span>
-                <span class="ticker-item">S&P 500 COMMODITIES<span class="ticker-sep"> //</span></span>
-                <span class="ticker-item">REAL ESTATE ARBITRAGE<span class="ticker-sep"> //</span></span>
-                <span class="ticker-item">INDUSTRIAL INFRASTRUCTURE<span class="ticker-sep"> //</span></span>
-                <span class="ticker-item">ADMINISTRATIVE NAVIGATION<span class="ticker-sep"> //</span></span>
-                <span class="ticker-item">CROSS-BORDER CAPITAL<span class="ticker-sep"> //</span></span>
-                <span class="ticker-item">GOVERNMENT TENDERS<span class="ticker-sep"> //</span></span>
-                <span class="ticker-item">S&P 500 COMMODITIES<span class="ticker-sep"> //</span></span>
-                <span class="ticker-item">REAL ESTATE ARBITRAGE<span class="ticker-sep"> //</span></span>
-                <span class="ticker-item">INDUSTRIAL INFRASTRUCTURE<span class="ticker-sep"> //</span></span>
-                <span class="ticker-item">ADMINISTRATIVE NAVIGATION<span class="ticker-sep"> //</span></span>
-                <span class="ticker-item">CROSS-BORDER CAPITAL<span class="ticker-sep"> //</span></span>
-            </div>
         </div>
     </section>
 
     <section id="philosophy">
-        <span class="terminal-tag">SYS::RELATIONSHIP_ARBITRAGE.EXE</span>
-        <div class="content-wrapper">
-            <div class="content-left">
-                <p class="section-label">PHILOSOPHY</p>
-                <h1 class="headline">RELATIONSHIP ARBITRAGE.</h1>
-                <div class="accent-line"></div>
-                <p class="body-text">Connectivity is the only currency. Zeriq Advisory is a private architecture of Sovereign Loyalty. We leverage global trust capital to ensure every side is profitable and every loose end is dissolved.</p>
-            </div>
-            <div class="content-right">
-                <div class="globe-container">
-                    <canvas id="globe-canvas-3"></canvas>
+        <div class="grid-layout" style="grid-template-columns: 1fr;">
+            <div class="content" style="max-width: 1000px; margin: 0 auto; text-align: center;">
+                <p class="label fade-up">03 — Physical Truth</p>
+                <h1 class="fade-up delay-1">RELATIONSHIP ARBITRAGE.</h1>
+                <p class="fade-up delay-2" style="margin: 0 auto;">In a digital world, physical presence is the ultimate architecture. Connectivity is the only currency.</p>
+                <div class="pillar-grid fade-up delay-2">
+                    <div class="pillar">
+                        <h3>Discretion as Foundation</h3>
+                        <p>We operate outside the digital footprint. Privacy is the fundamental constraint that ensures client sovereignty.</p>
+                    </div>
+                    <div class="pillar">
+                        <h3>Synchronized Nodes</h3>
+                        <p>Relationship arbitrage is the alignment of global connectivity to ensure strategic intent translates into infrastructure.</p>
+                    </div>
+                    <div class="pillar">
+                        <h3>The Primacy of Presence</h3>
+                        <p>Zeriq rejects digital networking for the absolute accountability of physical, face-to-face engagement.</p>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="scroll-indicator">SCROLL</div>
     </section>
 
-    <section id="standard">
-        <span class="terminal-tag">SYS::THE_SOVEREIGN_STANDARD.EXE</span>
-        <div class="content-wrapper">
-            <div class="content-left">
-                <p class="section-label">THE STANDARD</p>
-                <h1 class="headline">THE SOVEREIGN STANDARD.</h1>
-                <div class="accent-line"></div>
-                <p class="body-text">Trust is the anchor. We do not operate on timelines; we operate on finality. We stay until the equation is solved. No loose ends.</p>
-                <div class="grid-3">
-                    <div class="pillar">
-                        <p class="pillar-num">01</p>
-                        <h3 class="pillar-title">Architecture of Trust</h3>
-                        <p class="pillar-desc">Every engagement begins with verified identity.</p>
-                    </div>
-                    <div class="pillar">
-                        <p class="pillar-num">02</p>
-                        <h3 class="pillar-title">Network Synchronization</h3>
-                        <p class="pillar-desc">Our network operates on alignment, not transaction.</p>
-                    </div>
-                    <div class="pillar">
-                        <p class="pillar-num">03</p>
-                        <h3 class="pillar-title">The Mandate of Closure</h3>
-                        <p class="pillar-desc">Every thread is tied. Every outcome is delivered.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="content-right">
-                <div class="globe-container">
-                    <canvas id="globe-canvas-4"></canvas>
-                </div>
+    <section id="mandate">
+        <div class="grid-layout">
+            <div class="content">
+                <p class="label fade-up">04 — The Standard</p>
+                <h1 class="fade-up delay-1">A MANDATE<br>OF DUTY.</h1>
+                <div class="accent-line delay-2"></div>
+                <p class="fade-up delay-2">Resolution is a matter of duty, not just expertise. Every engagement is viewed through the lens of sovereign loyalty and absolute responsibility. We do not accept the existence of 'unsolvable variables.'</p>
+                <p class="fade-up delay-2" style="font-weight: 500;">Zeriq Advisory operates on a mandate of closure. We stay until the equation is resolved. No exceptions. No loose ends.</p>
             </div>
         </div>
     </section>
 
     <section id="access">
-        <span class="terminal-tag">SYS::SECURE_ACCESS</span>
-        <div class="content-wrapper">
-            <div class="content-left" style="display: flex; flex-direction: column; align-items: center;">
-                <p class="section-label">ACCESS</p>
-                <h1 class="headline" style="text-align: center;">REQUEST ENTRY.</h1>
-                <div class="accent-line"></div>
-                <a href="mailto:shivam@zeriqadvisory.com" class="contact-email">shivam@zeriqadvisory.com</a>
-                <p class="disclaimer">Zeriq Advisory operates on physical trust and absolute responsibility. Access is selective. All engagements are confidential. Data is never stored.</p>
+        <div class="content" style="text-align: center; margin: 0 auto;">
+            <p class="label fade-up">05 — Selective Entry</p>
+            <h1 class="fade-up delay-1">PRIVATE ENTRY.</h1>
+            <p class="fade-up delay-2" style="margin: 0 auto 40px;">Zeriq Advisory operates strictly on physical trust and vetted referral. Access is selective. Communication is the beginning of an architectural alignment that culminates in physical engagement.</p>
+            <div class="fade-up delay-2">
+                <a href="mailto:shivam@zeriqadvisory.com" class="email-btn">REQUEST ACCESS</a>
             </div>
         </div>
     </section>
 
-    <footer style="background: var(--black); color: var(--bone); padding: 40px 48px; text-align: center; border-top: 1px solid rgba(255,255,255,0.06);">
-        <div style="max-width: 720px; margin: 0 auto;">
-            <p style="font-size: 11px; letter-spacing: 3px; color: var(--lime); margin-bottom: 16px;">ZERIQ ADVISORY</p>
-            <p style="font-size: 10px; letter-spacing: 1.5px; color: rgba(247,245,240,0.9); margin-bottom: 16px;">© 2026 Zeriq Advisory. All Rights Reserved.</p>
-            <p style="font-size: 9px; letter-spacing: 1px; line-height: 2; color: rgba(247,245,240,0.4); max-width: 600px; margin: 0 auto;">All content, trademarks, branding, source code, designs, graphics, and intellectual property displayed on this website are the exclusive property of Zeriq Advisory. Any unauthorized use, reproduction, or distribution is strictly prohibited and may result in legal action.</p>
-        </div>
-    </footer>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        function createGlobe(canvasId) {
-            const canvas = document.getElementById(canvasId);
-            if (!canvas) return;
+        // High-End Liquid Globe Interaction
+        let globeGroup;
+        function initGlobe() {
+            const canvas = document.getElementById('globe-canvas');
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
 
             const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
-            const renderer = new THREE.WebGLRenderer({ 
-                canvas, 
-                alpha: true, 
-                antialias: true,
-                powerPreference: "high-performance"
-            });
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 3;
 
-            const container = canvas.parentElement;
-            let width = container.clientWidth;
-            let height = container.clientHeight;
-            renderer.setSize(width, height);
-            camera.position.z = 2.2;
-
-            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-            const pointLight = new THREE.PointLight(0xffffff, 0.8);
-            pointLight.position.set(5, 3, 5);
-            scene.add(pointLight);
-
-            const globeGroup = new THREE.Group();
+            globeGroup = new THREE.Group();
+            // Start smaller and slightly offset to the right
+            globeGroup.scale.set(0.8, 0.8, 0.8);
+            globeGroup.position.x = 0.8;
             scene.add(globeGroup);
 
-            const sphereGeo = new THREE.SphereGeometry(1, 64, 64);
-            
-            const glassMaterial = new THREE.MeshPhysicalMaterial({
-                color: 0xF7F5F0,
-                metalness: 0,
-                roughness: 0.05,
-                transmission: 0.95,
-                thickness: 0.5,
-                transparent: true,
-                opacity: 0.08
+            // Frosted Glass Globe
+            const geo = new THREE.SphereGeometry(1, 64, 64);
+            const mat = new THREE.MeshPhysicalMaterial({
+                color: 0xffffff, metalness: 0, roughness: 0.1, 
+                transmission: 1, thickness: 0.5, transparent: true, opacity: 0.3
             });
-            const glassSphere = new THREE.Mesh(sphereGeo, glassMaterial);
-            globeGroup.add(glassSphere);
+            const mesh = new THREE.Mesh(geo, mat);
+            globeGroup.add(mesh);
 
-            const wireframeGeo = new THREE.WireframeGeometry(sphereGeo);
-            const wireframeMat = new THREE.LineBasicMaterial({ 
-                color: 0xAAAAAA, 
-                transparent: true, 
-                opacity: 0.15,
-                linewidth: 1
-            });
-            const wireframe = new THREE.LineSegments(wireframeGeo, wireframeMat);
-            globeGroup.add(wireframe);
-
-            const latToVector = (lat, lon) => {
-                const latRad = lat * Math.PI / 180;
-                const lonRad = lon * Math.PI / 180;
-                return new THREE.Vector3(
-                    Math.cos(latRad) * Math.sin(lonRad),
-                    Math.sin(latRad),
-                    Math.cos(latRad) * Math.cos(lonRad)
-                );
-            };
-
-            const continents = [
-                [[-10, 35], [-5, 55], [5, 55], [15, 45], [25, 30], [35, 30], [40, 25], [35, 10], [25, 0], [15, -5], [5, 5], [-5, 15], [-10, 35]],
-                [[-130, 55], [-95, 60], [-75, 45], [-95, 25], [-100, 20], [-120, 30], [-125, 45], [-130, 55]],
-                [[-85, 10], [-75, 5], [-70, 0], [-60, 5], [-55, 10], [-50, 5], [-45, -5], [-50, -15], [-55, -20], [-65, 0], [-75, 5], [-80, 10], [-85, 10]],
-                [[70, 35], [80, 30], [90, 25], [100, 20], [110, 25], [120, 30], [130, 35], [140, 40], [145, 50], [140, 60], [130, 65], [120, 60], [110, 55], [100, 50], [90, 45], [80, 40], [70, 35]],
-                [[25, -35], [30, -25], [35, -15], [40, -5], [50, 5], [55, 15], [50, 25], [40, 30], [30, 25], [25, 15], [20, 5], [25, -5], [30, -15], [25, -35]]
-            ];
-
-            const continentMat = new THREE.LineBasicMaterial({ 
-                color: 0x888888, 
-                transparent: true, 
-                opacity: 0.35 
-            });
-
-            continents.forEach(path => {
-                for (let i = 0; i < path.length - 1; i++) {
-                    const p1 = latToVector(path[i][1], path[i][0]);
-                    const p2 = latToVector(path[i+1][1], path[i+1][0]);
-                    const geometry = new THREE.BufferGeometry().setFromPoints([p1, p2]);
-                    globeGroup.add(new THREE.Line(geometry, continentMat));
-                }
-            });
-
-            const globalNodes = {
-                london: { lat: 51.5, lon: -0.1 },
-                dubai: { lat: 25.2, lon: 55.3 },
-                singapore: { lat: 1.3, lon: 103.8 },
-                nyc: { lat: 40.7, lon: -74.0 },
-                tokyo: { lat: 35.6, lon: 139.7 },
-                frankfurt: { lat: 50.1, lon: 8.7 },
-                sydney: { lat: -33.9, lon: 151.2 },
-                hongkong: { lat: 22.3, lon: 114.2 }
-            };
-
-            const nodePositions = {};
-            Object.entries(globalNodes).forEach(([key, node]) => {
-                nodePositions[key] = latToVector(node.lat, node.lon);
-            });
-
-            const arcGroup = new THREE.Group();
-            globeGroup.add(arcGroup);
-
-            const nodeKeys = Object.keys(nodePositions);
-            const arcData = [];
-
-            for (let i = 0; i < nodeKeys.length; i++) {
-                for (let j = i + 1; j < nodeKeys.length; j++) {
-                    if (Math.random() > 0.35) {
-                        const from = nodePositions[nodeKeys[i]];
-                        const to = nodePositions[nodeKeys[j]];
-                        const mid = new THREE.Vector3().addVectors(from, to).multiplyScalar(0.5);
-                        const direct = new THREE.Vector3().subVectors(to, from);
-                        const normal = new THREE.Vector3().crossVectors(direct, new THREE.Vector3(0, 1, 0)).normalize();
-                        if (normal.length() < 0.1) normal.set(0, 0, 1);
-                        mid.add(normal.multiplyScalar(0.4 + Math.random() * 0.3));
-                        mid.normalize().multiplyScalar(1.18);
-
-                        const curve = new THREE.QuadraticBezierCurve3(
-                            from.clone().multiplyScalar(1.01),
-                            mid,
-                            to.clone().multiplyScalar(1.01)
-                        );
-
-                        const points = curve.getPoints(60);
-                        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-                        const material = new THREE.LineBasicMaterial({ 
-                            color: 0xD32F2F, 
-                            transparent: true, 
-                            opacity: 0,
-                            linewidth: 1.5
-                        });
-                        const arc = new THREE.Line(geometry, material);
-                        arcGroup.add(arc);
-                        arcData.push({ arc, phase: Math.random() * Math.PI * 2 });
-                    }
-                }
+            // Champagne Arcs
+            const arcMat = new THREE.LineBasicMaterial({ color: 0xC5A059, transparent: true, opacity: 0.2 });
+            for(let i=0; i<15; i++) {
+                const curve = new THREE.EllipseCurve(0, 0, 1.05, 1.05, 0, Math.PI * 2);
+                const points = curve.getPoints(50);
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const line = new THREE.Line(geometry, arcMat);
+                line.rotation.x = Math.random() * Math.PI;
+                line.rotation.y = Math.random() * Math.PI;
+                globeGroup.add(line);
             }
 
-            const dotGeo = new THREE.SphereGeometry(0.016, 12, 12);
-            const dotMat = new THREE.MeshBasicMaterial({ color: 0xB8E04A });
+            // Connectivity Nodes (Dots)
+            const radius = 1.01; // Slightly above globe surface
+            const pointsData = [];
             const dots = [];
+            const dotGeo = new THREE.SphereGeometry(0.015, 16, 16);
+            
+            // Generate random points on the sphere
+            for(let i = 0; i < 15; i++) {
+                const u = Math.random();
+                const v = Math.random();
+                const theta = u * 2.0 * Math.PI;
+                const phi = Math.acos(2.0 * v - 1.0);
+                
+                const x = radius * Math.sin(phi) * Math.cos(theta);
+                const y = radius * Math.sin(phi) * Math.sin(theta);
+                const z = radius * Math.cos(phi);
+                pointsData.push(new THREE.Vector3(x, y, z));
+            }
 
-            Object.values(nodePositions).forEach(pos => {
+            pointsData.forEach(pos => {
+                // Elegant Champagne color for all nodes
+                const dotMat = new THREE.MeshBasicMaterial({ color: 0xC5A059, transparent: true });
                 const dot = new THREE.Mesh(dotGeo, dotMat);
-                dot.position.copy(pos).multiplyScalar(1.02);
+                dot.position.copy(pos);
+                dot.userData = { 
+                    pulsePhase: Math.random() * Math.PI * 2, 
+                    pulseSpeed: 0.005 + Math.random() * 0.01 
+                };
                 globeGroup.add(dot);
                 dots.push(dot);
             });
 
-            let isDragging = false;
-            let prevX = 0;
-            let prevY = 0;
-            let velX = 0;
-            let velY = 0;
-            let targetRotX = 0;
-            let targetRotY = 0;
+            // Connectivity Lines
+            const linesGroup = new THREE.Group();
+            const lineMat = new THREE.LineBasicMaterial({ color: 0xC5A059, transparent: true, opacity: 0 }); // Champagne lines
+            
+            for(let i = 0; i < 12; i++) {
+                const p1 = pointsData[Math.floor(Math.random() * pointsData.length)];
+                let p2 = pointsData[Math.floor(Math.random() * pointsData.length)];
+                
+                // Prevent lines connecting to the same point
+                while(p1.distanceTo(p2) < 0.1) {
+                    p2 = pointsData[Math.floor(Math.random() * pointsData.length)];
+                }
 
-            const onDown = (e) => {
-                isDragging = true;
-                prevX = e.clientX || e.touches?.[0]?.clientX || 0;
-                prevY = e.clientY || e.touches?.[0]?.clientY || 0;
-                velX = 0;
-                velY = 0;
-            };
+                const distance = p1.distanceTo(p2);
+                const midPoint = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
+                const arcHeight = distance * 0.25; // Arch height based on distance
+                midPoint.normalize().multiplyScalar(radius + arcHeight);
 
-            const onMove = (e) => {
-                if (!isDragging) return;
-                const x = e.clientX || e.touches?.[0]?.clientX || 0;
-                const y = e.clientY || e.touches?.[0]?.clientY || 0;
-                velX = (x - prevX) * 0.003;
-                velY = (y - prevY) * 0.003;
-                targetRotY += velX;
-                targetRotX += velY;
-                targetRotX = Math.max(-0.8, Math.min(0.8, targetRotX));
-                prevX = x;
-                prevY = y;
-            };
+                const curve = new THREE.QuadraticBezierCurve3(p1, midPoint, p2);
+                const curvePoints = curve.getPoints(30);
+                const geometry = new THREE.BufferGeometry().setFromPoints(curvePoints);
+                const connectionLine = new THREE.Line(geometry, lineMat.clone());
+                
+                connectionLine.userData = { 
+                    phase: Math.random() * Math.PI * 2, 
+                    speed: 0.005 + Math.random() * 0.01 
+                };
+                linesGroup.add(connectionLine);
+            }
+            globeGroup.add(linesGroup);
 
-            const onUp = () => { isDragging = false; };
-
-            canvas.addEventListener('mousedown', onDown);
-            canvas.addEventListener('mousemove', onMove);
-            canvas.addEventListener('mouseup', onUp);
-            canvas.addEventListener('mouseleave', onUp);
-            canvas.addEventListener('touchstart', onDown);
-            canvas.addEventListener('touchmove', onMove);
-            canvas.addEventListener('touchend', onUp);
-
-            let time = 0;
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
 
             function animate() {
                 requestAnimationFrame(animate);
+                globeGroup.rotation.y += 0.0008;
+                globeGroup.rotation.x += 0.0004;
 
-                if (!isDragging) {
-                    velX *= 0.96;
-                    velY *= 0.96;
-                    targetRotY += velX;
-                    targetRotX += velY;
-                    targetRotX = Math.max(-0.8, Math.min(0.8, targetRotX));
-                    targetRotY += 0.0012;
-                }
-
-                globeGroup.rotation.x += (targetRotX - globeGroup.rotation.x) * 0.07;
-                globeGroup.rotation.y += (targetRotY - globeGroup.rotation.y) * 0.07;
-
-                time += 0.016;
-
-                arcData.forEach((d) => {
-                    const pulse = Math.sin(time * 1.2 + d.phase) * 0.5 + 0.5;
-                    d.arc.material.opacity = pulse * 0.65;
+                // Animate Dots (Pulse size and opacity)
+                dots.forEach(dot => {
+                    dot.userData.pulsePhase += dot.userData.pulseSpeed;
+                    const pulse = Math.abs(Math.sin(dot.userData.pulsePhase));
+                    dot.material.opacity = 0.2 + 0.8 * pulse;
+                    const scale = 0.8 + 0.6 * pulse;
+                    dot.scale.set(scale, scale, scale);
                 });
 
-                dots.forEach((dot, i) => {
-                    dot.scale.setScalar(1 + Math.sin(time * 2 + i * 0.4) * 0.2);
+                // Animate Connectivity Lines (Pulse opacity)
+                linesGroup.children.forEach(line => {
+                    line.userData.phase += line.userData.speed;
+                    // Opacity flows in and out to simulate moving data/connections
+                    line.material.opacity = 0.05 + 0.35 * Math.abs(Math.sin(line.userData.phase));
                 });
 
                 renderer.render(scene, camera);
             }
-
-            const resizeHandler = () => {
-                width = container.clientWidth;
-                height = container.clientHeight;
-                renderer.setSize(width, height);
-                camera.aspect = width / height;
-                camera.updateProjectionMatrix();
-            };
-
-            window.addEventListener('resize', resizeHandler);
             animate();
         }
+        initGlobe();
 
-        createGlobe('globe-canvas');
-        createGlobe('globe-canvas-2');
-        createGlobe('globe-canvas-3');
-        createGlobe('globe-canvas-4');
+        // Liquid Background Interaction
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth) * 100;
+            const y = (e.clientY / window.innerHeight) * 100;
+            document.getElementById('liquid-bg').style.background = `
+                radial-gradient(circle at ${x}% ${y}%, rgba(197, 160, 89, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(26, 26, 26, 0.03) 0%, transparent 50%),
+                var(--bone)
+            `;
+        });
 
-        const sections = document.querySelectorAll('section');
+        // Aurora Scroll Interaction
+        const aurora = document.getElementById('scroll-aurora');
+        let isScrolling;
+        window.addEventListener('scroll', () => {
+            const scrollY = window.scrollY;
+            const maxScroll = document.body.scrollHeight - window.innerHeight;
+            
+            // Show aurora when scrolling starts
+            aurora.style.opacity = '1';
+            
+            // Clear the timeout while scrolling is active
+            window.clearTimeout(isScrolling);
+            
+            // Fade out when scrolling stops
+            isScrolling = setTimeout(() => {
+                aurora.style.opacity = '0';
+            }, 150);
+
+            if (maxScroll > 0) {
+                const scrollProgress = scrollY / maxScroll; // 0 to 1
+                
+                // Move aurora in a smooth curve as we scroll down
+                // Start center-top, swing right and move down
+                const xPos = -50 + Math.sin(scrollProgress * Math.PI) * 40; 
+                const yPos = -30 + scrollProgress * 150; 
+                
+                // Apply transform with scaling
+                aurora.style.transform = `translate(${xPos}%, ${yPos}%) scale(${1 + scrollProgress * 0.4})`;
+
+                // Maximize globe while scrolling down
+                if (globeGroup) {
+                    // Maximum scale bounded to prevent camera clipping inside the globe
+                    const targetScale = 0.8 + (scrollProgress * 1.8); // scale from 0.8x to 2.6x
+                    const targetX = 0.8 - (scrollProgress * 0.8); // move from right to center
+                    globeGroup.scale.set(targetScale, targetScale, targetScale);
+                    globeGroup.position.x = targetX;
+                }
+            }
+        });
+
+        // Intersection Observer for iOS-style landings
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('active');
-                } else {
-                    entry.target.classList.remove('active');
-                }
+                if(entry.isIntersecting) entry.target.classList.add('active');
             });
         }, { threshold: 0.5 });
-
-        sections.forEach(section => observer.observe(section));
-        sections[0].classList.add('active');
+        document.querySelectorAll('section').forEach(s => observer.observe(s));
     </script>
 </body>
 </html>
