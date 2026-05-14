@@ -4,468 +4,813 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZERIQ ADVISORY | Private Architecture</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
         :root {
             --bone: #F7F5F0;
             --obsidian: #1A1A1A;
             --charcoal: #4A4A4A;
             --champagne: #C5A059;
-            --glass-white: rgba(247, 245, 240, 0.4);
-            /* iOS 26 Spring Easing */
-            --spring: cubic-bezier(0.4, 0, 0.2, 1);
-            --liquid-ease: cubic-bezier(0.16, 1, 0.3, 1);
+            --glass: rgba(247, 245, 240, 0.5);
+            --ease: cubic-bezier(0.16, 1, 0.3, 1);
+            --aberration: 0px;
         }
 
-        html {
-            scroll-behavior: smooth;
-            background: var(--bone);
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { background: var(--bone); }
 
         body {
             font-family: 'DM Mono', monospace;
             color: var(--obsidian);
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
+            background: var(--bone);
+            cursor: none;
         }
 
-        /* Liquid Glass Background */
-        #liquid-bg {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: -1; pointer-events: none;
-            background: 
-                radial-gradient(circle at 0% 0%, rgba(197, 160, 89, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 100% 100%, rgba(26, 26, 26, 0.03) 0%, transparent 50%),
-                var(--bone);
-            transition: background 1s var(--liquid-ease);
-            overflow: hidden;
+        /* === LOADER === */
+        .loader {
+            position: fixed; inset: 0; z-index: 10002;
+            background: var(--bone);
+            display: flex; align-items: center; justify-content: center;
+            transition: opacity 1.2s var(--ease), visibility 1.2s;
+        }
+        .loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .loader-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 14px; letter-spacing: 6px; color: var(--obsidian);
+            animation: loaderPulse 2.4s ease-in-out infinite;
+        }
+        @keyframes loaderPulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
         }
 
-        /* iOS Glass Aurora Effect */
+        /* === FILM GRAIN === */
+        .grain {
+            position: fixed; inset: 0; z-index: 9998; pointer-events: none;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+            background-size: 256px;
+            animation: grain 0.5s steps(4) infinite;
+        }
+        @keyframes grain {
+            0%, 100% { transform: translate(0,0); }
+            10% { transform: translate(-3%,-7%); }
+            20% { transform: translate(-8%,3%); }
+            30% { transform: translate(3%,-12%); }
+            40% { transform: translate(-5%,12%); }
+            50% { transform: translate(-12%,5%); }
+            60% { transform: translate(12%,0%); }
+            70% { transform: translate(0%,8%); }
+            80% { transform: translate(2%,17%); }
+            90% { transform: translate(-7%,5%); }
+        }
+
+        /* === VIGNETTE === */
+        .vignette {
+            position: fixed; inset: 0; z-index: 9997; pointer-events: none;
+            background: radial-gradient(circle at center, transparent 55%, rgba(26,26,26,0.14) 100%);
+        }
+
+        /* === CUSTOM CURSOR === */
+        .cursor, .cursor-trail {
+            position: fixed; top: 0; left: 0; pointer-events: none; z-index: 10001;
+            border-radius: 50%; will-change: transform;
+        }
+        .cursor {
+            width: 8px; height: 8px;
+            background: var(--champagne);
+            mix-blend-mode: difference;
+            transition: width 0.4s var(--ease), height 0.4s var(--ease), background 0.4s, border 0.4s;
+        }
+        .cursor.hover {
+            width: 48px; height: 48px;
+            background: transparent;
+            border: 1px solid var(--champagne);
+            mix-blend-mode: difference;
+        }
+        .cursor-trail {
+            width: 40px; height: 40px;
+            border: 1px solid rgba(197, 160, 89, 0.15);
+        }
+
+        /* === NAVIGATION === */
+        nav {
+            position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+            width: 92%; max-width: 1200px; z-index: 100;
+            padding: 1.2rem 2.5rem;
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--glass);
+            backdrop-filter: blur(30px) saturate(160%);
+            -webkit-backdrop-filter: blur(30px) saturate(160%);
+            border: 1px solid rgba(255,255,255,0.45);
+            border-radius: 100px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.04);
+            transition: all 0.6s var(--ease);
+        }
+        nav.scrolled {
+            padding: 0.85rem 2rem;
+            background: rgba(247, 245, 240, 0.78);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+        }
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 12px; letter-spacing: 3.5px; font-weight: 700;
+            color: var(--obsidian);
+            transition: transform 0.4s var(--ease);
+        }
+        .nav-links { display: flex; gap: 32px; }
+        .nav-links a {
+            font-size: 10px; letter-spacing: 2px; color: var(--charcoal);
+            text-decoration: none; transition: all 0.4s var(--ease);
+            position: relative; padding: 4px 0;
+            display: inline-block;
+        }
+        .nav-links a::after {
+            content: ''; position: absolute; bottom: 0; left: 0;
+            width: 0; height: 1px; background: var(--champagne);
+            transition: width 0.5s var(--ease);
+        }
+        .nav-links a:hover { color: var(--obsidian); }
+        .nav-links a:hover::after { width: 100%; }
+
+        /* === GLOBE === */
+        #globe-container {
+            position: fixed; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 1; pointer-events: none;
+        }
+
+        /* === AURORA === */
         .aurora {
-            position: absolute;
-            top: 0%; left: 50%;
-            width: 70vw; height: 70vh;
-            background: radial-gradient(ellipse at center, rgba(255, 248, 230, 0.8) 0%, rgba(255, 255, 255, 0) 65%);
+            position: fixed; top: 0; left: 50%;
+            width: 80vw; height: 80vh;
+            background: radial-gradient(ellipse at center, rgba(255, 248, 230, 0.5) 0%, rgba(255,255,255,0) 65%);
             border-radius: 50%;
             filter: blur(120px);
-            transform: translate(-50%, -30%);
-            will-change: transform, opacity;
-            transition: transform 0.6s var(--liquid-ease), opacity 0.8s ease;
-            pointer-events: none;
-            opacity: 0;
+            transform: translate(-50%, -40%);
+            pointer-events: none; z-index: 0;
+            opacity: 0.7;
+            transition: transform 1.5s var(--ease), opacity 1.2s;
         }
 
-        /* iOS-Style Glass Nav */
-        nav {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 1200px; z-index: 100;
-            padding: 1.2rem 2.5rem; display: flex; justify-content: space-between; align-items: center;
-            background: var(--glass-white);
-            backdrop-filter: blur(25px) saturate(180%);
-            -webkit-backdrop-filter: blur(25px) saturate(180%);
-            border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 100px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.03);
-        }
+        /* === MAIN === */
+        main { position: relative; z-index: 2; }
 
-        .logo { font-family: 'Playfair Display', serif; font-size: 14px; letter-spacing: 4px; font-weight: 700; }
-        .nav-links { display: flex; gap: 30px; }
-        .nav-links a { 
-            font-size: 10px; letter-spacing: 2px; color: var(--charcoal); 
-            text-decoration: none; transition: opacity 0.3s;
-        }
-        .nav-links a:hover { opacity: 0.5; }
-
-        /* Sections */
         section {
             min-height: 100vh; width: 100vw;
             display: flex; align-items: center; justify-content: center;
-            position: relative; padding: 120px 10vw;
+            position: relative; padding: 140px 8vw;
+            overflow: hidden;
         }
 
         .grid-layout {
-            display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 5vw;
-            width: 100%; max-width: 1300px; align-items: center;
+            display: grid; grid-template-columns: 1.2fr 0.8fr;
+            gap: 6vw; width: 100%; max-width: 1300px;
+            align-items: center; position: relative; z-index: 2;
         }
 
-        /* Glass Content Cards */
-        .glass-card {
-            padding: 40px;
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 40px;
-            border: 1px solid rgba(255,255,255,0.2);
-            transition: transform 0.8s var(--liquid-ease);
+        .content {
+            position: relative; z-index: 2;
+            transition: transform 0.15s linear;
         }
 
-        /* Typography */
         .label {
             font-size: 9px; letter-spacing: 4px; color: var(--champagne);
-            margin-bottom: 24px; text-transform: uppercase; font-weight: 500;
+            margin-bottom: 28px; text-transform: uppercase; font-weight: 500;
+            opacity: 0; transform: translateY(20px);
+            transition: all 1s var(--ease);
         }
+
         h1 {
             font-family: 'Playfair Display', serif; font-weight: 600;
-            font-size: clamp(2.5rem, 5vw, 4.2rem); line-height: 1.1;
-            color: var(--obsidian); margin-bottom: 30px; letter-spacing: -0.03em;
-        }
-        p {
-            font-size: 13px; line-height: 2.2; color: var(--charcoal);
-            font-weight: 300; max-width: 480px;
+            font-size: clamp(2.8rem, 5.5vw, 5rem); line-height: 1.08;
+            color: var(--obsidian); margin-bottom: 32px; letter-spacing: -0.03em;
+            overflow: hidden;
         }
 
-        /* Interactive Elements */
+        .char {
+            display: inline-block;
+            vertical-align: bottom;
+            opacity: 0; transform: translateY(110%);
+            filter: blur(6px);
+            transition: all 0.9s var(--ease);
+            will-change: transform, opacity, filter;
+        }
+        .char.revealed {
+            opacity: 1; transform: translateY(0); filter: blur(0px);
+        }
+
+        p {
+            font-size: 13px; line-height: 2.4; color: var(--charcoal);
+            font-weight: 300; max-width: 500px;
+        }
+
+        .word {
+            display: inline-block;
+            opacity: 0; transform: translateY(12px);
+            filter: blur(4px);
+            transition: all 0.7s var(--ease);
+            margin-right: 0.28em;
+            will-change: transform, opacity, filter;
+        }
+        .word.revealed {
+            opacity: 1; transform: translateY(0); filter: blur(0px);
+        }
+
         .accent-line {
             width: 0; height: 1px; background: var(--champagne);
-            margin: 30px 0; transition: width 1.5s var(--liquid-ease);
+            margin: 32px 0;
+            display: block;
+            transition: width 1.8s var(--ease);
+            animation: heartbeat 3.5s ease-in-out infinite;
+            transform-origin: left center;
+        }
+        @keyframes heartbeat {
+            0%, 100% { opacity: 0.5; transform: scaleX(1); }
+            50% { opacity: 1; transform: scaleX(1.2); }
         }
 
-        /* Globe Canvas */
-        .visual { position: relative; width: 100%; aspect-ratio: 1; z-index: 5; }
-        #globe-canvas { 
-            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; 
-            filter: drop-shadow(0 20px 50px rgba(0,0,0,0.05)); z-index: 0; pointer-events: none;
-        }
-
-        /* Animations */
-        .fade-up {
-            opacity: 0; transform: translateY(40px) scale(0.98);
-            transition: all 1.2s var(--liquid-ease);
-        }
-        section.active .fade-up { opacity: 1; transform: translateY(0) scale(1); }
+        section.active .label { opacity: 1; transform: translateY(0); }
         section.active .accent-line { width: 80px; }
-        section.active .fade-up.delay-1 { transition-delay: 0.1s; }
-        section.active .fade-up.delay-2 { transition-delay: 0.2s; }
 
-        /* Pillar Grid for Philosophy */
+        /* === PILLARS === */
         .pillar-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 30px; margin-top: 40px;
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 24px; margin-top: 48px;
         }
         .pillar {
-            background: rgba(255,255,255,0.2);
-            padding: 30px; border-radius: 24px;
-            border: 1px solid rgba(255,255,255,0.4);
-            transition: all 0.4s var(--liquid-ease);
+            background: rgba(255,255,255,0.3);
+            padding: 36px 28px; border-radius: 28px;
+            border: 1px solid rgba(255,255,255,0.55);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: all 0.6s var(--ease);
+            opacity: 0; transform: translateY(30px);
         }
-        .pillar:hover { background: rgba(255,255,255,0.5); transform: translateY(-5px); }
-        .pillar h3 { font-family: 'Playfair Display', serif; font-size: 14px; margin-bottom: 12px; }
-        .pillar p { font-size: 11px; line-height: 1.8; }
+        section.active .pillar { opacity: 1; transform: translateY(0); }
+        section.active .pillar:nth-child(1) { transition-delay: 0.4s; }
+        section.active .pillar:nth-child(2) { transition-delay: 0.6s; }
+        section.active .pillar:nth-child(3) { transition-delay: 0.8s; }
 
-        /* Email Button */
+        .pillar:hover {
+            background: rgba(255,255,255,0.6);
+            transform: translateY(-8px);
+            border-color: rgba(197, 160, 89, 0.35);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.04);
+        }
+        .pillar h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 15px; margin-bottom: 14px; color: var(--obsidian);
+        }
+        .pillar p { font-size: 11px; line-height: 1.9; max-width: none; }
+
+        /* === BUTTON === */
         .email-btn {
-            display: inline-block; padding: 20px 40px;
+            display: inline-block; padding: 22px 44px;
             background: var(--obsidian); color: var(--bone);
             text-decoration: none; border-radius: 100px;
             font-size: 11px; letter-spacing: 3px;
-            transition: all 0.4s var(--liquid-ease);
+            transition: all 0.5s var(--ease);
             border: 1px solid transparent;
+            position: relative; overflow: hidden;
+            cursor: none;
         }
-        .email-btn:hover { 
-            background: transparent; color: var(--champagne); 
-            border-color: var(--champagne); transform: scale(1.05);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 0 20px rgba(197, 160, 89, 0.2), inset 0 0 10px rgba(197, 160, 89, 0.1);
+        .email-btn::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.7s var(--ease);
+        }
+        .email-btn:hover {
+            background: transparent; color: var(--obsidian);
+            border-color: var(--obsidian);
+            transform: scale(1.06);
+            letter-spacing: 4px;
+        }
+        .email-btn:hover::before { transform: translateX(100%); }
+
+        /* === CHROMATIC === */
+        .chromatic h1, .chromatic .reveal-text {
+            text-shadow:
+                calc(var(--aberration) * -1) 0 0 rgba(197, 160, 89, 0.35),
+                var(--aberration) 0 0 rgba(197, 160, 89, 0.15);
         }
 
+        /* === MOBILE === */
         @media (max-width: 900px) {
-            .grid-layout { grid-template-columns: 1fr; text-align: center; }
-            nav { width: 95%; padding: 1rem; }
+            body { cursor: auto; }
+            .cursor, .cursor-trail, .grain { display: none; }
+            .grid-layout { grid-template-columns: 1fr; text-align: center; gap: 40px; }
+            nav { width: 95%; padding: 1rem; top: 12px; }
             .nav-links { display: none; }
-            .visual { order: -1; max-width: 300px; margin: 0 auto; }
-            p { margin: 0 auto; }
             .pillar-grid { grid-template-columns: 1fr; }
+            p { margin: 0 auto; }
+            .accent-line { margin: 24px auto; transform-origin: center; }
+            section { padding: 100px 6vw; }
+            h1 { font-size: clamp(2rem, 8vw, 3rem); }
+            .char { filter: blur(3px); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            .grain { display: none; }
+            .cursor, .cursor-trail { display: none; }
+            body { cursor: auto; }
         }
     </style>
 </head>
 <body>
 
-    <div id="liquid-bg">
-        <canvas id="globe-canvas"></canvas>
-        <div class="aurora" id="scroll-aurora"></div>
-    </div>
+    <div class="loader"><div class="loader-text">ZERIQ ADVISORY.</div></div>
+    <div class="grain"></div>
+    <div class="vignette"></div>
+    <div class="cursor"></div>
+    <div class="cursor-trail"></div>
+    <div class="aurora" id="aurora"></div>
 
     <nav>
-        <div class="logo">ZERIQ ADVISORY.</div>
+        <div class="logo magnetic">ZERIQ ADVISORY.</div>
         <div class="nav-links">
-            <a href="#home">HOME</a>
-            <a href="#architecture">ARCHITECTURE</a>
-            <a href="#philosophy">PHILOSOPHY</a>
-            <a href="#mandate">MANDATE</a>
-            <a href="#access">ACCESS</a>
+            <a href="#home" class="magnetic">HOME</a>
+            <a href="#architecture" class="magnetic">ARCHITECTURE</a>
+            <a href="#philosophy" class="magnetic">PHILOSOPHY</a>
+            <a href="#mandate" class="magnetic">MANDATE</a>
+            <a href="#access" class="magnetic">ACCESS</a>
         </div>
     </nav>
 
-    <section id="home" class="active">
-        <div class="grid-layout">
-            <div class="content">
-                <p class="label fade-up">01 — Global Resolution</p>
-                <h1 class="fade-up delay-1">THE ARCHITECTURE<br>OF FINALITY.</h1>
-                <div class="accent-line delay-2"></div>
-                <p class="fade-up delay-2">Zeriq Advisory operates as a sovereign node for cross-border capital and industrial infrastructure. We do not provide opinions; we execute the final equation.</p>
-            </div>
-            <div class="visual">
-            </div>
-        </div>
-    </section>
+    <div id="globe-container"></div>
 
-    <section id="architecture">
-        <div class="grid-layout">
-            <div class="content">
-                <p class="label fade-up">02 — The Universal Solvent</p>
-                <h1 class="fade-up delay-1">UNIVERSAL<br>ARCHITECTURE.</h1>
-                <div class="accent-line delay-2"></div>
-                <p class="fade-up delay-2">Architecture transcends geography. We apply a singular standard of closure to the world’s most intricate industrial equations. Where others manage process, we engineer finality. We do not navigate friction; we dissolve it.</p>
-            </div>
-            <div class="visual">
+    <main>
+        <section id="home">
+            <div class="grid-layout">
+                <div class="content">
+                    <p class="label">01 — Global Resolution</p>
+                    <h1>THE ARCHITECTURE<br>OF FINALITY.</h1>
+                    <div class="accent-line"></div>
+                    <p class="reveal-text">Zeriq Advisory operates as a sovereign node for cross-border capital and industrial infrastructure. We do not provide opinions; we execute the final equation.</p>
                 </div>
-        </div>
-    </section>
+                <div class="visual"></div>
+            </div>
+        </section>
 
-    <section id="philosophy">
-        <div class="grid-layout" style="grid-template-columns: 1fr;">
-            <div class="content" style="max-width: 1000px; margin: 0 auto; text-align: center;">
-                <p class="label fade-up">03 — Physical Truth</p>
-                <h1 class="fade-up delay-1">RELATIONSHIP ARBITRAGE.</h1>
-                <p class="fade-up delay-2" style="margin: 0 auto;">In a digital world, physical presence is the ultimate architecture. Connectivity is the only currency.</p>
-                <div class="pillar-grid fade-up delay-2">
-                    <div class="pillar">
-                        <h3>Discretion as Foundation</h3>
-                        <p>We operate outside the digital footprint. Privacy is the fundamental constraint that ensures client sovereignty.</p>
-                    </div>
-                    <div class="pillar">
-                        <h3>Synchronized Nodes</h3>
-                        <p>Relationship arbitrage is the alignment of global connectivity to ensure strategic intent translates into infrastructure.</p>
-                    </div>
-                    <div class="pillar">
-                        <h3>The Primacy of Presence</h3>
-                        <p>Zeriq rejects digital networking for the absolute accountability of physical, face-to-face engagement.</p>
+        <section id="architecture">
+            <div class="grid-layout">
+                <div class="content">
+                    <p class="label">02 — The Universal Solvent</p>
+                    <h1>UNIVERSAL<br>ARCHITECTURE.</h1>
+                    <div class="accent-line"></div>
+                    <p class="reveal-text">Architecture transcends geography. We apply a singular standard of closure to the world's most intricate industrial equations. Where others manage process, we engineer finality. We do not navigate friction; we dissolve it.</p>
+                </div>
+                <div class="visual"></div>
+            </div>
+        </section>
+
+        <section id="philosophy">
+            <div class="grid-layout" style="grid-template-columns: 1fr;">
+                <div class="content" style="max-width: 1000px; margin: 0 auto; text-align: center;">
+                    <p class="label">03 — Physical Truth</p>
+                    <h1>RELATIONSHIP<br>ARBITRAGE.</h1>
+                    <p class="reveal-text" style="margin: 0 auto 48px;">In a digital world, physical presence is the ultimate architecture. Connectivity is the only currency.</p>
+                    <div class="pillar-grid">
+                        <div class="pillar">
+                            <h3>Discretion as Foundation</h3>
+                            <p>We operate outside the digital footprint. Privacy is the fundamental constraint that ensures client sovereignty.</p>
+                        </div>
+                        <div class="pillar">
+                            <h3>Synchronized Nodes</h3>
+                            <p>Relationship arbitrage is the alignment of global connectivity to ensure strategic intent translates into infrastructure.</p>
+                        </div>
+                        <div class="pillar">
+                            <h3>The Primacy of Presence</h3>
+                            <p>Zeriq rejects digital networking for the absolute accountability of physical, face-to-face engagement.</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <section id="mandate">
-        <div class="grid-layout">
-            <div class="content">
-                <p class="label fade-up">04 — The Standard</p>
-                <h1 class="fade-up delay-1">A MANDATE<br>OF DUTY.</h1>
-                <div class="accent-line delay-2"></div>
-                <p class="fade-up delay-2">Resolution is a matter of duty, not just expertise. Every engagement is viewed through the lens of sovereign loyalty and absolute responsibility. We do not accept the existence of 'unsolvable variables.'</p>
-                <p class="fade-up delay-2" style="font-weight: 500;">Zeriq Advisory operates on a mandate of closure. We stay until the equation is resolved. No exceptions. No loose ends.</p>
+        <section id="mandate">
+            <div class="grid-layout">
+                <div class="content">
+                    <p class="label">04 — The Standard</p>
+                    <h1>A MANDATE<br>OF DUTY.</h1>
+                    <div class="accent-line"></div>
+                    <p class="reveal-text">Resolution is a matter of duty, not just expertise. Every engagement is viewed through the lens of sovereign loyalty and absolute responsibility. We do not accept the existence of 'unsolvable variables.'</p>
+                    <p class="reveal-text" style="font-weight: 500; margin-top: 24px;">Zeriq Advisory operates on a mandate of closure. We stay until the equation is resolved. No exceptions. No loose ends.</p>
+                </div>
+                <div class="visual"></div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <section id="access">
-        <div class="content" style="text-align: center; margin: 0 auto;">
-            <p class="label fade-up">05 — Selective Entry</p>
-            <h1 class="fade-up delay-1">PRIVATE ENTRY.</h1>
-            <p class="fade-up delay-2" style="margin: 0 auto 40px;">Zeriq Advisory operates strictly on physical trust and vetted referral. Access is selective. Communication is the beginning of an architectural alignment that culminates in physical engagement.</p>
-            <div class="fade-up delay-2">
-                <a href="mailto:shivam@zeriqadvisory.com" class="email-btn">REQUEST ACCESS</a>
+        <section id="access">
+            <div class="content" style="text-align: center; margin: 0 auto; max-width: 700px;">
+                <p class="label">05 — Selective Entry</p>
+                <h1>PRIVATE ENTRY.</h1>
+                <p class="reveal-text" style="margin: 0 auto 48px;">Zeriq Advisory operates strictly on physical trust and vetted referral. Access is selective. Communication is the beginning of an architectural alignment that culminates in physical engagement.</p>
+                <div>
+                    <a href="mailto:shivam@zeriqadvisory.com" class="email-btn magnetic">REQUEST ACCESS</a>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
+    </main>
 
     <script>
-        // High-End Liquid Globe Interaction
-        let globeGroup;
-        function initGlobe() {
-            const canvas = document.getElementById('globe-canvas');
-            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.setSize(window.innerWidth, window.innerHeight);
+    (function() {
+        const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
 
+        // === LOADER ===
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loader = document.querySelector('.loader');
+                loader.classList.add('hidden');
+                setTimeout(() => {
+                    const home = document.querySelector('#home');
+                    home.classList.add('active');
+                    home.querySelectorAll('.char, .word').forEach(el => el.classList.add('revealed'));
+                }, 400);
+            }, 1400);
+        });
+
+        // === THREE.JS GLOBE ===
+        try {
+            const container = document.getElementById('globe-container');
             const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 3;
+            scene.fog = new THREE.FogExp2(0xF7F5F0, 0.022);
 
-            globeGroup = new THREE.Group();
-            // Start smaller and slightly offset to the right
-            globeGroup.scale.set(0.8, 0.8, 0.8);
-            globeGroup.position.x = 0.8;
+            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 4.5;
+
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            const globeGroup = new THREE.Group();
             scene.add(globeGroup);
 
-            // Frosted Glass Globe
-            const geo = new THREE.SphereGeometry(1, 64, 64);
-            const mat = new THREE.MeshPhysicalMaterial({
-                color: 0xffffff, metalness: 0, roughness: 0.1, 
-                transmission: 1, thickness: 0.5, transparent: true, opacity: 0.3
+            // Glass core
+            const coreGeo = new THREE.SphereGeometry(1, 64, 64);
+            const coreMat = new THREE.MeshPhysicalMaterial({
+                color: 0xffffff, metalness: 0.1, roughness: 0.15,
+                transmission: 0.95, thickness: 1.5, transparent: true, opacity: 0.22,
+                clearcoat: 1, clearcoatRoughness: 0.1
             });
-            const mesh = new THREE.Mesh(geo, mat);
-            globeGroup.add(mesh);
+            const core = new THREE.Mesh(coreGeo, coreMat);
+            globeGroup.add(core);
 
-            // Champagne Arcs
-            const arcMat = new THREE.LineBasicMaterial({ color: 0xC5A059, transparent: true, opacity: 0.2 });
-            for(let i=0; i<15; i++) {
-                const curve = new THREE.EllipseCurve(0, 0, 1.05, 1.05, 0, Math.PI * 2);
-                const points = curve.getPoints(50);
-                const geometry = new THREE.BufferGeometry().setFromPoints(points);
-                const line = new THREE.Line(geometry, arcMat);
-                line.rotation.x = Math.random() * Math.PI;
-                line.rotation.y = Math.random() * Math.PI;
-                globeGroup.add(line);
+            // Wireframe shell
+            const wireGeo = new THREE.SphereGeometry(1.03, 32, 32);
+            const wireMat = new THREE.MeshBasicMaterial({
+                color: 0xC5A059, wireframe: true, transparent: true, opacity: 0.05
+            });
+            const wireShell = new THREE.Mesh(wireGeo, wireMat);
+            globeGroup.add(wireShell);
+
+            // Glow texture
+            const glowCanvas = document.createElement('canvas');
+            glowCanvas.width = 64; glowCanvas.height = 64;
+            const gCtx = glowCanvas.getContext('2d');
+            const gGrad = gCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
+            gGrad.addColorStop(0, 'rgba(197, 160, 89, 1)');
+            gGrad.addColorStop(0.35, 'rgba(197, 160, 89, 0.35)');
+            gGrad.addColorStop(1, 'rgba(197, 160, 89, 0)');
+            gCtx.fillStyle = gGrad;
+            gCtx.fillRect(0, 0, 64, 64);
+            const glowTex = new THREE.CanvasTexture(glowCanvas);
+
+            // Nodes
+            const nodeCount = isTouchDevice ? 50 : 130;
+            const nodePositions = [];
+            const goldenRatio = (1 + Math.sqrt(5)) / 2;
+            const sprites = [];
+
+            for (let i = 0; i < nodeCount; i++) {
+                const theta = 2 * Math.PI * i / goldenRatio;
+                const phi = Math.acos(1 - 2 * (i + 0.5) / nodeCount);
+                const x = Math.sin(phi) * Math.cos(theta);
+                const y = Math.sin(phi) * Math.sin(theta);
+                const z = Math.cos(phi);
+                const pos = new THREE.Vector3(x, y, z);
+                nodePositions.push(pos);
+
+                const spriteMat = new THREE.SpriteMaterial({
+                    map: glowTex, transparent: true, opacity: 0.45,
+                    blending: THREE.AdditiveBlending, depthWrite: false
+                });
+                const sprite = new THREE.Sprite(spriteMat);
+                sprite.position.copy(pos).multiplyScalar(1.04);
+                sprite.scale.set(0.055, 0.055, 0.055);
+                sprite.userData = { phase: Math.random() * Math.PI * 2, speed: 0.35 + Math.random() * 0.65 };
+                globeGroup.add(sprite);
+                sprites.push(sprite);
             }
 
-            // Connectivity Nodes (Dots)
-            const radius = 1.01; // Slightly above globe surface
-            const pointsData = [];
-            const dots = [];
-            const dotGeo = new THREE.SphereGeometry(0.015, 16, 16);
-            
-            // Generate random points on the sphere
-            for(let i = 0; i < 15; i++) {
-                const u = Math.random();
-                const v = Math.random();
-                const theta = u * 2.0 * Math.PI;
-                const phi = Math.acos(2.0 * v - 1.0);
-                
-                const x = radius * Math.sin(phi) * Math.cos(theta);
-                const y = radius * Math.sin(phi) * Math.sin(theta);
-                const z = radius * Math.cos(phi);
-                pointsData.push(new THREE.Vector3(x, y, z));
-            }
-
-            pointsData.forEach(pos => {
-                // Elegant Champagne color for all nodes
-                const dotMat = new THREE.MeshBasicMaterial({ color: 0xC5A059, transparent: true });
-                const dot = new THREE.Mesh(dotGeo, dotMat);
-                dot.position.copy(pos);
-                dot.userData = { 
-                    pulsePhase: Math.random() * Math.PI * 2, 
-                    pulseSpeed: 0.005 + Math.random() * 0.01 
-                };
-                globeGroup.add(dot);
-                dots.push(dot);
+            // Connections
+            const lineMat = new THREE.LineBasicMaterial({
+                color: 0xC5A059, transparent: true, opacity: 0.1, blending: THREE.AdditiveBlending
             });
-
-            // Connectivity Lines
-            const linesGroup = new THREE.Group();
-            const lineMat = new THREE.LineBasicMaterial({ color: 0xC5A059, transparent: true, opacity: 0 }); // Champagne lines
-            
-            for(let i = 0; i < 12; i++) {
-                const p1 = pointsData[Math.floor(Math.random() * pointsData.length)];
-                let p2 = pointsData[Math.floor(Math.random() * pointsData.length)];
-                
-                // Prevent lines connecting to the same point
-                while(p1.distanceTo(p2) < 0.1) {
-                    p2 = pointsData[Math.floor(Math.random() * pointsData.length)];
+            for (let i = 0; i < nodeCount; i++) {
+                let connections = 0;
+                for (let j = i + 1; j < nodeCount && connections < 3; j++) {
+                    if (nodePositions[i].distanceTo(nodePositions[j]) < 0.3) {
+                        const pts = [nodePositions[i].clone().multiplyScalar(1.04), nodePositions[j].clone().multiplyScalar(1.04)];
+                        const lineGeo = new THREE.BufferGeometry().setFromPoints(pts);
+                        globeGroup.add(new THREE.Line(lineGeo, lineMat));
+                        connections++;
+                    }
                 }
-
-                const distance = p1.distanceTo(p2);
-                const midPoint = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
-                const arcHeight = distance * 0.25; // Arch height based on distance
-                midPoint.normalize().multiplyScalar(radius + arcHeight);
-
-                const curve = new THREE.QuadraticBezierCurve3(p1, midPoint, p2);
-                const curvePoints = curve.getPoints(30);
-                const geometry = new THREE.BufferGeometry().setFromPoints(curvePoints);
-                const connectionLine = new THREE.Line(geometry, lineMat.clone());
-                
-                connectionLine.userData = { 
-                    phase: Math.random() * Math.PI * 2, 
-                    speed: 0.005 + Math.random() * 0.01 
-                };
-                linesGroup.add(connectionLine);
             }
-            globeGroup.add(linesGroup);
+
+            // Atmosphere
+            const atmoGeo = new THREE.SphereGeometry(1.38, 64, 64);
+            const atmoMat = new THREE.ShaderMaterial({
+                vertexShader: `varying vec3 vNormal; void main(){ vNormal=normalize(normalMatrix*normal); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+                fragmentShader: `varying vec3 vNormal; void main(){ float intensity=pow(0.58-dot(vNormal,vec3(0,0,1.0)),3.0); gl_FragColor=vec4(0.77,0.63,0.35,intensity*0.32); }`,
+                transparent: true, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false
+            });
+            globeGroup.add(new THREE.Mesh(atmoGeo, atmoMat));
+
+            // Inner ring
+            const ringGeo = new THREE.TorusGeometry(0.52, 0.002, 16, 100);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0xC5A059, transparent: true, opacity: 0.2 });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = Math.PI / 2;
+            globeGroup.add(ring);
+
+            // Particles
+            const pCount = isTouchDevice ? 80 : 350;
+            const pGeo = new THREE.BufferGeometry();
+            const pPos = new Float32Array(pCount * 3);
+            const pVel = [];
+            for (let i = 0; i < pCount; i++) {
+                pPos[i*3] = (Math.random() - 0.5) * 18;
+                pPos[i*3+1] = (Math.random() - 0.5) * 18;
+                pPos[i*3+2] = (Math.random() - 0.5) * 14;
+                pVel.push({ x: (Math.random() - 0.5) * 0.002, y: 0.0008 + Math.random() * 0.003, z: (Math.random() - 0.5) * 0.002 });
+            }
+            pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+            const pMat = new THREE.PointsMaterial({
+                color: 0xC5A059, size: 0.022, transparent: true, opacity: 0.3,
+                blending: THREE.AdditiveBlending, depthWrite: false
+            });
+            const particles = new THREE.Points(pGeo, pMat);
+            scene.add(particles);
+
+            // Mouse & Scroll
+            let mouseX = 0, mouseY = 0, targetMX = 0, targetMY = 0;
+            let scrollY = 0, scrollTarget = 0, scrollVel = 0;
+
+            document.addEventListener('mousemove', (e) => {
+                targetMX = (e.clientX / window.innerWidth) * 2 - 1;
+                targetMY = -(e.clientY / window.innerHeight) * 2 + 1;
+            });
+            window.addEventListener('scroll', () => { scrollTarget = window.scrollY; });
+
+            const clock = new THREE.Clock();
+
+            function animate() {
+                requestAnimationFrame(animate);
+                const time = clock.getElapsedTime();
+
+                mouseX += (targetMX - mouseX) * 0.04;
+                mouseY += (targetMY - mouseY) * 0.04;
+
+                scrollVel = scrollTarget - scrollY;
+                scrollY += scrollVel * 0.08;
+
+                const maxScroll = document.body.scrollHeight - window.innerHeight;
+                const progress = maxScroll > 0 ? Math.min(scrollY / maxScroll, 1) : 0;
+
+                const targetScale = 0.65 + progress * 1.5;
+                globeGroup.scale.setScalar(targetScale);
+                globeGroup.position.x = 2.0 - progress * 2.0;
+                globeGroup.position.y = -progress * 0.7;
+
+                const breathe = 1 + Math.sin(time * 0.7) * 0.012;
+                core.scale.setScalar(breathe);
+
+                globeGroup.rotation.y += 0.0012;
+                globeGroup.rotation.x = mouseY * 0.1;
+                globeGroup.rotation.z = mouseX * 0.05;
+
+                ring.rotation.x = Math.PI/2 + time * 0.12;
+                ring.rotation.y = time * 0.07;
+
+                sprites.forEach(s => {
+                    const pulse = Math.sin(time * s.userData.speed + s.userData.phase) * 0.4 + 0.6;
+                    s.material.opacity = pulse * 0.55;
+                    const sc = 0.055 * (0.7 + pulse * 0.5);
+                    s.scale.set(sc, sc, sc);
+                });
+
+                const positions = particles.geometry.attributes.position.array;
+                for (let i = 0; i < pCount; i++) {
+                    positions[i*3] += pVel[i].x + mouseX * 0.004;
+                    positions[i*3+1] += pVel[i].y;
+                    positions[i*3+2] += pVel[i].z + mouseY * 0.004;
+                    if (positions[i*3+1] > 10) {
+                        positions[i*3+1] = -10;
+                        positions[i*3] = (Math.random() - 0.5) * 18;
+                        positions[i*3+2] = (Math.random() - 0.5) * 14;
+                    }
+                }
+                particles.geometry.attributes.position.needsUpdate = true;
+
+                camera.position.x = mouseX * 0.5;
+                camera.position.y = mouseY * 0.5;
+                camera.lookAt(globeGroup.position);
+
+                renderer.render(scene, camera);
+            }
+            animate();
 
             window.addEventListener('resize', () => {
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
             });
-
-            function animate() {
-                requestAnimationFrame(animate);
-                globeGroup.rotation.y += 0.0008;
-                globeGroup.rotation.x += 0.0004;
-
-                // Animate Dots (Pulse size and opacity)
-                dots.forEach(dot => {
-                    dot.userData.pulsePhase += dot.userData.pulseSpeed;
-                    const pulse = Math.abs(Math.sin(dot.userData.pulsePhase));
-                    dot.material.opacity = 0.2 + 0.8 * pulse;
-                    const scale = 0.8 + 0.6 * pulse;
-                    dot.scale.set(scale, scale, scale);
-                });
-
-                // Animate Connectivity Lines (Pulse opacity)
-                linesGroup.children.forEach(line => {
-                    line.userData.phase += line.userData.speed;
-                    // Opacity flows in and out to simulate moving data/connections
-                    line.material.opacity = 0.05 + 0.35 * Math.abs(Math.sin(line.userData.phase));
-                });
-
-                renderer.render(scene, camera);
-            }
-            animate();
+        } catch (e) {
+            console.error('WebGL unsupported');
+            document.getElementById('globe-container').style.display = 'none';
         }
-        initGlobe();
 
-        // Liquid Background Interaction
+        // === TEXT SPLITTING ===
+        function splitChars(el) {
+            const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+            const nodes = [];
+            while (walker.nextNode()) nodes.push(walker.currentNode);
+            nodes.forEach((node, ni) => {
+                const text = node.textContent;
+                const frag = document.createDocumentFragment();
+                const parts = text.split(/(\s+)/);
+                parts.forEach((part, pi) => {
+                    if (/^\s+$/.test(part)) {
+                        frag.appendChild(document.createTextNode(part));
+                    } else {
+                        const wordWrap = document.createElement('span');
+                        wordWrap.style.display = 'inline-block';
+                        wordWrap.style.whiteSpace = 'nowrap';
+                        part.split('').forEach((char, ci) => {
+                            const span = document.createElement('span');
+                            span.className = 'char';
+                            span.textContent = char;
+                            span.style.transitionDelay = `${(ni * 8 + pi * 4 + ci) * 0.02}s`;
+                            span.style.verticalAlign = 'bottom';
+                            wordWrap.appendChild(span);
+                        });
+                        frag.appendChild(wordWrap);
+                    }
+                });
+                node.parentNode.replaceChild(frag, node);
+            });
+        }
+        function splitWords(el) {
+            const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+            const nodes = [];
+            while (walker.nextNode()) nodes.push(walker.currentNode);
+            nodes.forEach((node, ni) => {
+                const text = node.textContent;
+                const frag = document.createDocumentFragment();
+                const words = text.split(' ');
+                words.forEach((word, i) => {
+                    const span = document.createElement('span');
+                    span.className = 'word';
+                    span.textContent = word;
+                    span.style.transitionDelay = `${(ni * 5 + i) * 0.05}s`;
+                    frag.appendChild(span);
+                    if (i < words.length - 1) frag.appendChild(document.createTextNode(' '));
+                });
+                node.parentNode.replaceChild(frag, node);
+            });
+        }
+
+        document.querySelectorAll('h1').forEach(splitChars);
+        document.querySelectorAll('.reveal-text').forEach(splitWords);
+
+        // === INTERSECTION OBSERVER ===
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    entry.target.querySelectorAll('.char, .word').forEach(el => {
+                        el.classList.add('revealed');
+                    });
+                }
+            });
+        }, { threshold: 0.2, rootMargin: '-8% 0px -8% 0px' });
+
+        document.querySelectorAll('section').forEach(s => observer.observe(s));
+
+        // === CUSTOM CURSOR ===
+        if (!isTouchDevice) {
+            const cursor = document.querySelector('.cursor');
+            const trail = document.querySelector('.cursor-trail');
+            let cPos = { x: -100, y: -100 };
+            let tPos = { x: -100, y: -100 };
+            let target = { x: -100, y: -100 };
+
+            document.addEventListener('mousemove', (e) => {
+                target.x = e.clientX;
+                target.y = e.clientY;
+            });
+
+            function updateCursor() {
+                cPos.x += (target.x - cPos.x) * 0.12;
+                cPos.y += (target.y - cPos.y) * 0.12;
+                tPos.x += (target.x - tPos.x) * 0.06;
+                tPos.y += (target.y - tPos.y) * 0.06;
+
+                cursor.style.transform = `translate3d(${cPos.x - 4}px, ${cPos.y - 4}px, 0)`;
+                trail.style.transform = `translate3d(${tPos.x - 20}px, ${tPos.y - 20}px, 0)`;
+
+                requestAnimationFrame(updateCursor);
+            }
+            updateCursor();
+
+            document.querySelectorAll('a, button, .magnetic').forEach(el => {
+                el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+                el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+            });
+        } else {
+            document.querySelector('.cursor').style.display = 'none';
+            document.querySelector('.cursor-trail').style.display = 'none';
+        }
+
+        // === MAGNETIC EFFECT ===
+        document.querySelectorAll('.magnetic').forEach(el => {
+            el.addEventListener('mousemove', (e) => {
+                const rect = el.getBoundingClientRect();
+                el.style.transform = `translate(${(e.clientX - rect.left - rect.width/2) * 0.2}px, ${(e.clientY - rect.top - rect.height/2) * 0.2}px)`;
+            });
+            el.addEventListener('mouseleave', () => {
+                el.style.transition = 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+                el.style.transform = 'translate(0,0)';
+                setTimeout(() => el.style.transition = '', 600);
+            });
+        });
+
+        // === SCROLL EFFECTS ===
+        const aurora = document.getElementById('aurora');
+        let scrollTick = false;
+        const nav = document.querySelector('nav');
+
+        window.addEventListener('scroll', () => {
+            if (!scrollTick) {
+                requestAnimationFrame(() => {
+                    const max = document.body.scrollHeight - window.innerHeight;
+                    const p = max > 0 ? window.scrollY / max : 0;
+
+                    const ax = -50 + Math.sin(p * Math.PI) * 30;
+                    const ay = -40 + p * 130;
+                    aurora.style.transform = `translate(${ax}%, ${ay}%) scale(${1 + p * 0.45})`;
+
+                    const vel = Math.abs(scrollTarget - scrollY);
+                    const aberration = Math.min(vel * 0.12, 3);
+                    document.documentElement.style.setProperty('--aberration', `${aberration}px`);
+                    if (aberration > 0.5) document.body.classList.add('chromatic');
+                    else document.body.classList.remove('chromatic');
+
+                    if (window.scrollY > 80) nav.classList.add('scrolled');
+                    else nav.classList.remove('scrolled');
+
+                    scrollTick = false;
+                });
+                scrollTick = true;
+            }
+        });
+
+        // === LIQUID BACKGROUND ===
         document.addEventListener('mousemove', (e) => {
             const x = (e.clientX / window.innerWidth) * 100;
             const y = (e.clientY / window.innerHeight) * 100;
-            document.getElementById('liquid-bg').style.background = `
-                radial-gradient(circle at ${x}% ${y}%, rgba(197, 160, 89, 0.12) 0%, transparent 50%),
-                radial-gradient(circle at 100% 100%, rgba(26, 26, 26, 0.03) 0%, transparent 50%),
-                var(--bone)
+            document.body.style.background = `
+                radial-gradient(circle at ${x}% ${y}%, rgba(197, 160, 89, 0.07) 0%, transparent 50%),
+                radial-gradient(circle at ${100-x}% ${100-y}%, rgba(26, 26, 26, 0.015) 0%, transparent 50%),
+                #F7F5F0
             `;
         });
 
-        // Aurora Scroll Interaction
-        const aurora = document.getElementById('scroll-aurora');
-        let isScrolling;
-        window.addEventListener('scroll', () => {
-            const scrollY = window.scrollY;
-            const maxScroll = document.body.scrollHeight - window.innerHeight;
-            
-            // Show aurora when scrolling starts
-            aurora.style.opacity = '1';
-            
-            // Clear the timeout while scrolling is active
-            window.clearTimeout(isScrolling);
-            
-            // Fade out when scrolling stops
-            isScrolling = setTimeout(() => {
-                aurora.style.opacity = '0';
-            }, 150);
-
-            if (maxScroll > 0) {
-                const scrollProgress = scrollY / maxScroll; // 0 to 1
-                
-                // Move aurora in a smooth curve as we scroll down
-                // Start center-top, swing right and move down
-                const xPos = -50 + Math.sin(scrollProgress * Math.PI) * 40; 
-                const yPos = -30 + scrollProgress * 150; 
-                
-                // Apply transform with scaling
-                aurora.style.transform = `translate(${xPos}%, ${yPos}%) scale(${1 + scrollProgress * 0.4})`;
-
-                // Maximize globe while scrolling down
-                if (globeGroup) {
-                    // Maximum scale bounded to prevent camera clipping inside the globe
-                    const targetScale = 0.8 + (scrollProgress * 1.8); // scale from 0.8x to 2.6x
-                    const targetX = 0.8 - (scrollProgress * 0.8); // move from right to center
-                    globeGroup.scale.set(targetScale, targetScale, targetScale);
-                    globeGroup.position.x = targetX;
-                }
-            }
-        });
-
-        // Intersection Observer for iOS-style landings
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if(entry.isIntersecting) entry.target.classList.add('active');
+        // === SMOOTH ANCHOR ===
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
-        }, { threshold: 0.5 });
-        document.querySelectorAll('section').forEach(s => observer.observe(s));
+        });
+    })();
     </script>
 </body>
 </html>
