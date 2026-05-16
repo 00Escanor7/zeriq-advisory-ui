@@ -3,25 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZERIQ ADVISORY | Private Architecture</title>
+    <meta name="description" content="Zeriq Advisory — Sovereign architecture for cross-border capital and industrial infrastructure. Private entry by referral only.">
+    <meta name="theme-color" content="#F7F5F0">
+    <title>ZERIQ ADVISORY | The Architecture of Finality</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
     <style>
         :root {
             --bone: #F7F5F0;
+            --bone-warm: #F0EDE6;
             --obsidian: #1A1A1A;
             --charcoal: #4A4A4A;
             --champagne: #C5A059;
+            --champagne-dark: #A08040;
             --glass: rgba(247, 245, 240, 0.5);
             --ease: cubic-bezier(0.16, 1, 0.3, 1);
-            --aberration: 0px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        html { background: var(--bone); }
+        html { 
+            background: var(--bone); 
+            scroll-behavior: smooth;
+        }
 
         body {
             font-family: 'DM Mono', monospace;
@@ -30,6 +39,31 @@
             -webkit-font-smoothing: antialiased;
             background: var(--bone);
             cursor: none;
+            min-height: 100vh;
+        }
+
+        ::selection {
+            background: var(--champagne);
+            color: var(--bone);
+        }
+        ::-moz-selection {
+            background: var(--champagne);
+            color: var(--bone);
+        }
+
+        /* === SCROLL WARMTH OVERLAY === */
+        /* Page warms from bone-white to champagne-gold as you scroll */
+        .scroll-warmth {
+            position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+            background: linear-gradient(180deg,
+                rgba(197, 160, 89, 0) 0%,
+                rgba(197, 160, 89, 0.08) 25%,
+                rgba(197, 160, 89, 0.18) 55%,
+                rgba(197, 160, 89, 0.30) 85%,
+                rgba(197, 160, 89, 0.38) 100%
+            );
+            opacity: 0;
+            transition: opacity 0.3s linear;
         }
 
         /* === LOADER === */
@@ -39,7 +73,9 @@
             display: flex; align-items: center; justify-content: center;
             transition: opacity 1.2s var(--ease), visibility 1.2s;
         }
-        .loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .loader.hidden { 
+            opacity: 0; visibility: hidden; pointer-events: none; 
+        }
         .loader-text {
             font-family: 'Playfair Display', serif;
             font-size: 14px; letter-spacing: 6px; color: var(--obsidian);
@@ -87,10 +123,11 @@
             width: 8px; height: 8px;
             background: var(--champagne);
             mix-blend-mode: difference;
-            transition: width 0.4s var(--ease), height 0.4s var(--ease), background 0.4s, border 0.4s;
+            transition: width 0.4s var(--ease), height 0.4s var(--ease), margin 0.4s var(--ease), background 0.4s, border 0.4s;
         }
         .cursor.hover {
             width: 48px; height: 48px;
+            margin: -20px 0 0 -20px;
             background: transparent;
             border: 1px solid var(--champagne);
             mix-blend-mode: difference;
@@ -139,6 +176,83 @@
         }
         .nav-links a:hover { color: var(--obsidian); }
         .nav-links a:hover::after { width: 100%; }
+        .nav-links a.active { color: var(--obsidian); }
+        .nav-links a.active::after { width: 100%; }
+
+        /* === HAMBURGER === */
+        .hamburger {
+            display: none; flex-direction: column; gap: 5px;
+            background: none; border: none; padding: 8px;
+            cursor: none; z-index: 101;
+        }
+        .hamburger span {
+            display: block; width: 20px; height: 1.5px;
+            background: var(--obsidian); transition: all 0.4s var(--ease);
+            transform-origin: center;
+        }
+        .hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(4.5px, 4.5px); }
+        .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(4.5px, -4.5px); }
+
+        .mobile-menu {
+            position: fixed; inset: 0; z-index: 102;
+            background: rgba(247, 245, 240, 0.96);
+            backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 36px;
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: all 0.6s var(--ease);
+        }
+        .mobile-menu.open { opacity: 1; visibility: visible; pointer-events: auto; }
+        .mobile-menu a {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px; letter-spacing: 4px; color: var(--obsidian);
+            text-decoration: none; transition: all 0.4s var(--ease);
+            opacity: 0; transform: translateY(20px);
+        }
+        .mobile-menu.open a {
+            opacity: 1; transform: translateY(0);
+        }
+        .mobile-menu.open a:nth-child(1) { transition-delay: 0.1s; }
+        .mobile-menu.open a:nth-child(2) { transition-delay: 0.15s; }
+        .mobile-menu.open a:nth-child(3) { transition-delay: 0.2s; }
+        .mobile-menu.open a:nth-child(4) { transition-delay: 0.25s; }
+        .mobile-menu.open a:nth-child(5) { transition-delay: 0.3s; }
+
+        /* === SCROLL PROGRESS === */
+        .scroll-progress {
+            position: fixed; top: 0; left: 0; height: 2px;
+            background: linear-gradient(90deg, var(--champagne), rgba(197, 160, 89, 0.4));
+            z-index: 10000; width: 0%; transition: width 0.1s linear;
+            box-shadow: 0 0 8px rgba(197, 160, 89, 0.3);
+        }
+
+        /* === SCROLL INDICATOR === */
+        .scroll-indicator {
+            position: absolute; bottom: 40px; left: 50%;
+            transform: translateX(-50%); display: flex;
+            flex-direction: column; align-items: center; gap: 10px;
+            opacity: 0; transition: opacity 1.5s var(--ease);
+            animation: scrollBounce 2.5s ease-in-out infinite;
+        }
+        .scroll-indicator.visible { opacity: 0.6; }
+        .scroll-indicator span {
+            font-size: 8px; letter-spacing: 3px; color: var(--charcoal);
+        }
+        .scroll-indicator .arrow {
+            width: 1px; height: 28px; background: var(--charcoal);
+            position: relative;
+        }
+        .scroll-indicator .arrow::after {
+            content: ''; position: absolute; bottom: 0; left: -3px;
+            width: 7px; height: 7px; border-right: 1px solid var(--charcoal);
+            border-bottom: 1px solid var(--charcoal);
+            transform: rotate(45deg);
+        }
+        @keyframes scrollBounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(10px); }
+        }
 
         /* === GLOBE === */
         #globe-container {
@@ -215,13 +329,11 @@
         .word {
             display: inline-block;
             opacity: 0; transform: translateY(12px);
-            filter: blur(4px);
             transition: all 0.7s var(--ease);
-            margin-right: 0.28em;
-            will-change: transform, opacity, filter;
+            will-change: transform, opacity;
         }
         .word.revealed {
-            opacity: 1; transform: translateY(0); filter: blur(0px);
+            opacity: 1; transform: translateY(0);
         }
 
         .accent-line {
@@ -260,11 +372,18 @@
         section.active .pillar:nth-child(3) { transition-delay: 0.8s; }
 
         .pillar:hover {
-            background: rgba(255,255,255,0.6);
-            transform: translateY(-8px);
-            border-color: rgba(197, 160, 89, 0.35);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.04);
+            background: rgba(255,255,255,0.65);
+            transform: translateY(-10px) scale(1.02);
+            border-color: rgba(197, 160, 89, 0.4);
+            box-shadow: 0 24px 48px rgba(0,0,0,0.06), 0 0 0 1px rgba(197,160,89,0.1);
         }
+        .pillar h3::before {
+            content: ''; display: inline-block;
+            width: 16px; height: 1px; background: var(--champagne);
+            margin-right: 10px; vertical-align: middle;
+            transition: width 0.5s var(--ease);
+        }
+        .pillar:hover h3::before { width: 28px; }
         .pillar h3 {
             font-family: 'Playfair Display', serif;
             font-size: 15px; margin-bottom: 14px; color: var(--obsidian);
@@ -296,11 +415,20 @@
         }
         .email-btn:hover::before { transform: translateX(100%); }
 
-        /* === CHROMATIC === */
-        .chromatic h1, .chromatic .reveal-text {
-            text-shadow:
-                calc(var(--aberration) * -1) 0 0 rgba(197, 160, 89, 0.35),
-                var(--aberration) 0 0 rgba(197, 160, 89, 0.15);
+        /* === FOOTER === */
+        footer {
+            position: relative; z-index: 2;
+            padding: 60px 8vw 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-top: 1px solid rgba(26, 26, 26, 0.06);
+        }
+        footer .footer-brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 11px; letter-spacing: 3px; color: var(--charcoal);
+        }
+
+        footer .footer-copy {
+            font-size: 9px; letter-spacing: 1px; color: rgba(74,74,74,0.5);
         }
 
         /* === MOBILE === */
@@ -310,12 +438,15 @@
             .grid-layout { grid-template-columns: 1fr; text-align: center; gap: 40px; }
             nav { width: 95%; padding: 1rem; top: 12px; }
             .nav-links { display: none; }
+            .hamburger { display: flex; cursor: pointer; }
+
             .pillar-grid { grid-template-columns: 1fr; }
             p { margin: 0 auto; }
             .accent-line { margin: 24px auto; transform-origin: center; }
             section { padding: 100px 6vw; }
             h1 { font-size: clamp(2rem, 8vw, 3rem); }
             .char { filter: blur(3px); }
+            footer { flex-direction: column; gap: 20px; text-align: center; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -332,6 +463,8 @@
 </head>
 <body>
 
+    <div class="scroll-progress" id="scrollProgress"></div>
+    <div class="scroll-warmth" id="scrollWarmth"></div>
     <div class="loader"><div class="loader-text">ZERIQ ADVISORY.</div></div>
     <div class="grain"></div>
     <div class="vignette"></div>
@@ -348,7 +481,18 @@
             <a href="#mandate" class="magnetic">MANDATE</a>
             <a href="#access" class="magnetic">ACCESS</a>
         </div>
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
     </nav>
+
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#home">HOME</a>
+        <a href="#architecture">ARCHITECTURE</a>
+        <a href="#philosophy">PHILOSOPHY</a>
+        <a href="#mandate">MANDATE</a>
+        <a href="#access">ACCESS</a>
+    </div>
 
     <div id="globe-container"></div>
 
@@ -362,6 +506,10 @@
                     <p class="reveal-text">Zeriq Advisory operates as a sovereign node for cross-border capital and industrial infrastructure. We do not provide opinions; we execute the final equation.</p>
                 </div>
                 <div class="visual"></div>
+            </div>
+            <div class="scroll-indicator" id="scrollIndicator">
+                <span>SCROLL</span>
+                <div class="arrow"></div>
             </div>
         </section>
 
@@ -426,9 +574,16 @@
         </section>
     </main>
 
+    <footer>
+        <div class="footer-brand">ZERIQ ADVISORY.</div>
+        <div class="footer-copy">&copy; 2025 ZERIQ ADVISORY. ALL RIGHTS RESERVED.</div>
+    </footer>
+
     <script>
     (function() {
         const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+        let scrollY = window.scrollY || 0;
+        let scrollTarget = window.scrollY || 0;
 
         // === LOADER ===
         window.addEventListener('load', () => {
@@ -437,13 +592,15 @@
                 loader.classList.add('hidden');
                 setTimeout(() => {
                     const home = document.querySelector('#home');
-                    home.classList.add('active');
-                    home.querySelectorAll('.char, .word').forEach(el => el.classList.add('revealed'));
+                    if(home) {
+                        home.classList.add('active');
+                        home.querySelectorAll('.char, .word').forEach(el => el.classList.add('revealed'));
+                    }
                 }, 400);
             }, 1400);
         });
 
-        // === THREE.JS GLOBE ===
+        // === THREE.JS GLOBE WITH SQUARE GRID WIREFRAME ===
         try {
             const container = document.getElementById('globe-container');
             const scene = new THREE.Scene();
@@ -470,13 +627,61 @@
             const core = new THREE.Mesh(coreGeo, coreMat);
             globeGroup.add(core);
 
-            // Wireframe shell
-            const wireGeo = new THREE.SphereGeometry(1.03, 32, 32);
-            const wireMat = new THREE.MeshBasicMaterial({
-                color: 0xC5A059, wireframe: true, transparent: true, opacity: 0.05
+            // Inner glow sphere - earth core glow
+            const innerGlowGeo = new THREE.SphereGeometry(0.85, 32, 32);
+            const innerGlowMat = new THREE.MeshBasicMaterial({
+                color: 0xC5A059, 
+                transparent: true, 
+                opacity: 0.03,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
             });
-            const wireShell = new THREE.Mesh(wireGeo, wireMat);
-            globeGroup.add(wireShell);
+            const innerGlow = new THREE.Mesh(innerGlowGeo, innerGlowMat);
+            globeGroup.add(innerGlow);
+
+            // === SQUARE GRID WIREFRAME (latitude/longitude lines) ===
+            // Instead of triangular wireframe, we create horizontal (latitude) 
+            // and vertical (longitude) rings to form square cells
+            const gridRadius = 1.03;
+            const latSegments = 16;  // horizontal rings
+            const lonSegments = 24;  // vertical rings
+            const gridMat = new THREE.LineBasicMaterial({
+                color: 0xC5A059, transparent: true, opacity: 0.06
+            });
+            const gridGroup = new THREE.Group();
+
+            // Longitude lines (vertical meridians)
+            for (let i = 0; i < lonSegments; i++) {
+                const phi = (i / lonSegments) * Math.PI * 2;
+                const points = [];
+                for (let j = 0; j <= 64; j++) {
+                    const theta = (j / 64) * Math.PI;
+                    const x = gridRadius * Math.sin(theta) * Math.cos(phi);
+                    const y = gridRadius * Math.cos(theta);
+                    const z = gridRadius * Math.sin(theta) * Math.sin(phi);
+                    points.push(new THREE.Vector3(x, y, z));
+                }
+                const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+                gridGroup.add(new THREE.Line(lineGeo, gridMat));
+            }
+
+            // Latitude lines (horizontal parallels)
+            for (let i = 1; i < latSegments; i++) {
+                const theta = (i / latSegments) * Math.PI;
+                const ringRadius = gridRadius * Math.sin(theta);
+                const y = gridRadius * Math.cos(theta);
+                const points = [];
+                for (let j = 0; j <= 64; j++) {
+                    const phi = (j / 64) * Math.PI * 2;
+                    const x = ringRadius * Math.cos(phi);
+                    const z = ringRadius * Math.sin(phi);
+                    points.push(new THREE.Vector3(x, y, z));
+                }
+                const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+                gridGroup.add(new THREE.Line(lineGeo, gridMat));
+            }
+
+            globeGroup.add(gridGroup);
 
             // Glow texture
             const glowCanvas = document.createElement('canvas');
@@ -490,7 +695,7 @@
             gCtx.fillRect(0, 0, 64, 64);
             const glowTex = new THREE.CanvasTexture(glowCanvas);
 
-            // Nodes
+            // Nodes - Fibonacci sphere
             const nodeCount = isTouchDevice ? 50 : 130;
             const nodePositions = [];
             const goldenRatio = (1 + Math.sqrt(5)) / 2;
@@ -512,7 +717,7 @@
                 const sprite = new THREE.Sprite(spriteMat);
                 sprite.position.copy(pos).multiplyScalar(1.04);
                 sprite.scale.set(0.055, 0.055, 0.055);
-                sprite.userData = { phase: Math.random() * Math.PI * 2, speed: 0.35 + Math.random() * 0.65 };
+                sprite.userData = { phase: Math.random() * Math.PI * 2, speed: 0.15 + Math.random() * 0.25 };
                 globeGroup.add(sprite);
                 sprites.push(sprite);
             }
@@ -533,14 +738,116 @@
                 }
             }
 
-            // Atmosphere
+            // SUNSHINE ATMOSPHERE - dark & light tones like real sun surface
             const atmoGeo = new THREE.SphereGeometry(1.38, 64, 64);
             const atmoMat = new THREE.ShaderMaterial({
-                vertexShader: `varying vec3 vNormal; void main(){ vNormal=normalize(normalMatrix*normal); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
-                fragmentShader: `varying vec3 vNormal; void main(){ float intensity=pow(0.58-dot(vNormal,vec3(0,0,1.0)),3.0); gl_FragColor=vec4(0.77,0.63,0.35,intensity*0.32); }`,
-                transparent: true, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false
+                vertexShader: `
+                    varying vec3 vNormal;
+                    varying vec3 vPosition;
+                    void main(){
+                        vNormal = normalize(normalMatrix * normal);
+                        vPosition = position;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    varying vec3 vNormal;
+                    varying vec3 vPosition;
+                    uniform float uTime;
+                    uniform float uProgress;
+
+                    // Simplex-like noise function
+                    vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                    vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                    vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+                    vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+
+                    float snoise(vec3 v) {
+                        const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+                        const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+                        vec3 i = floor(v + dot(v, C.yyy));
+                        vec3 x0 = v - i + dot(i, C.xxx);
+                        vec3 g = step(x0.yzx, x0.xyz);
+                        vec3 l = 1.0 - g;
+                        vec3 i1 = min(g.xyz, l.zxy);
+                        vec3 i2 = max(g.xyz, l.zxy);
+                        vec3 x1 = x0 - i1 + C.xxx;
+                        vec3 x2 = x0 - i2 + C.yyy;
+                        vec3 x3 = x0 - D.yyy;
+                        i = mod289(i);
+                        vec4 p = permute(permute(permute(
+                            i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                            + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                            + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+                        float n_ = 0.142857142857;
+                        vec3 ns = n_ * D.wyz - D.xzx;
+                        vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+                        vec4 x_ = floor(j * ns.z);
+                        vec4 y_ = floor(j - 7.0 * x_);
+                        vec4 x = x_ * ns.x + ns.yyyy;
+                        vec4 y = y_ * ns.x + ns.yyyy;
+                        vec4 h = 1.0 - abs(x) - abs(y);
+                        vec4 b0 = vec4(x.xy, y.xy);
+                        vec4 b1 = vec4(x.zw, y.zw);
+                        vec4 s0 = floor(b0)*2.0 + 1.0;
+                        vec4 s1 = floor(b1)*2.0 + 1.0;
+                        vec4 sh = -step(h, vec4(0.0));
+                        vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+                        vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+                        vec3 p0 = vec3(a0.xy, h.x);
+                        vec3 p1 = vec3(a0.zw, h.y);
+                        vec3 p2 = vec3(a1.xy, h.z);
+                        vec3 p3 = vec3(a1.zw, h.w);
+                        vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+                        p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+                        vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+                        m = m * m;
+                        return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+                    }
+
+                    void main(){
+                        float intensity = pow(0.58 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.0);
+
+                        // Create sunshine texture: dark & light bands, granular surface
+                        float noise1 = snoise(vPosition * 2.5 + uTime * 0.1);
+                        float noise2 = snoise(vPosition * 5.0 - uTime * 0.15);
+                        float noise3 = snoise(vPosition * 8.0 + uTime * 0.08);
+
+                        // Combine noise layers for solar surface effect
+                        float solarPattern = noise1 * 0.5 + noise2 * 0.3 + noise3 * 0.2;
+
+                        // Dark bands (sunspots) and light flares
+                        float darkBands = smoothstep(0.3, 0.7, solarPattern);
+                        float lightFlares = smoothstep(0.6, 0.9, solarPattern);
+
+                        // Base warm gold color (0.77, 0.63, 0.35)
+                        // Shift to cool white (0.95, 0.92, 0.88) as we scroll
+                        float baseR = 0.77 + uProgress * 0.18;
+                        float baseG = 0.63 + uProgress * 0.29;
+                        float baseB = 0.35 + uProgress * 0.53;
+
+                        // Dark bands make it deeper/more orange
+                        float r = baseR - darkBands * 0.15 + lightFlares * 0.25;
+                        float g = baseG - darkBands * 0.10 + lightFlares * 0.15;
+                        float b = baseB + lightFlares * 0.10;
+
+                        // Alpha: strong at top, fades as we scroll
+                        float alpha = intensity * (0.40 - uProgress * 0.25);
+
+                        gl_FragColor = vec4(r, g, b, alpha);
+                    }
+                `,
+                uniforms: {
+                    uTime: { value: 0.0 },
+                    uProgress: { value: 0.0 }
+                },
+                transparent: true,
+                side: THREE.BackSide,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
             });
-            globeGroup.add(new THREE.Mesh(atmoGeo, atmoMat));
+            const atmoMesh = new THREE.Mesh(atmoGeo, atmoMat);
+            globeGroup.add(atmoMesh);
 
             // Inner ring
             const ringGeo = new THREE.TorusGeometry(0.52, 0.002, 16, 100);
@@ -548,6 +855,14 @@
             const ring = new THREE.Mesh(ringGeo, ringMat);
             ring.rotation.x = Math.PI / 2;
             globeGroup.add(ring);
+
+            // Second orbital ring (tilted)
+            const ring2Geo = new THREE.TorusGeometry(0.72, 0.0012, 16, 100);
+            const ring2Mat = new THREE.MeshBasicMaterial({ color: 0xC5A059, transparent: true, opacity: 0.08 });
+            const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);
+            ring2.rotation.x = Math.PI / 2.5;
+            ring2.rotation.y = Math.PI / 6;
+            globeGroup.add(ring2);
 
             // Particles
             const pCount = isTouchDevice ? 80 : 350;
@@ -568,9 +883,71 @@
             const particles = new THREE.Points(pGeo, pMat);
             scene.add(particles);
 
+            // Orbital ring 1
+            const orbitCount = isTouchDevice ? 30 : 60;
+            const orbitGeo = new THREE.BufferGeometry();
+            const orbitPos = new Float32Array(orbitCount * 3);
+            const orbitData = [];
+            for (let i = 0; i < orbitCount; i++) {
+                const angle = (i / orbitCount) * Math.PI * 2;
+                const radius = 1.6 + Math.random() * 0.15;
+                orbitPos[i*3] = Math.cos(angle) * radius;
+                orbitPos[i*3+1] = (Math.random() - 0.5) * 0.08;
+                orbitPos[i*3+2] = Math.sin(angle) * radius;
+                orbitData.push({ angle, radius, speed: 0.06 + Math.random() * 0.12, offset: Math.random() * Math.PI * 2 });
+            }
+            orbitGeo.setAttribute('position', new THREE.BufferAttribute(orbitPos, 3));
+            const orbitMat = new THREE.PointsMaterial({
+                color: 0xC5A059, size: 0.035, transparent: true, opacity: 0.5,
+                blending: THREE.AdditiveBlending, depthWrite: false
+            });
+            const orbitParticles = new THREE.Points(orbitGeo, orbitMat);
+            orbitParticles.rotation.x = Math.PI * 0.12;
+            orbitParticles.rotation.z = Math.PI * 0.05;
+            globeGroup.add(orbitParticles);
+
+            // Orbital ring 2 (counter-rotating)
+            const orbit2Count = isTouchDevice ? 20 : 40;
+            const orbit2Geo = new THREE.BufferGeometry();
+            const orbit2Pos = new Float32Array(orbit2Count * 3);
+            const orbit2Data = [];
+            for (let i = 0; i < orbit2Count; i++) {
+                const angle = (i / orbit2Count) * Math.PI * 2;
+                const radius = 1.45 + Math.random() * 0.1;
+                orbit2Pos[i*3] = Math.cos(angle) * radius;
+                orbit2Pos[i*3+1] = (Math.random() - 0.5) * 0.06;
+                orbit2Pos[i*3+2] = Math.sin(angle) * radius;
+                orbit2Data.push({ angle, radius, speed: 0.04 + Math.random() * 0.08, offset: Math.random() * Math.PI * 2 });
+            }
+            orbit2Geo.setAttribute('position', new THREE.BufferAttribute(orbit2Pos, 3));
+            const orbit2Mat = new THREE.PointsMaterial({
+                color: 0xC5A059, size: 0.025, transparent: true, opacity: 0.35,
+                blending: THREE.AdditiveBlending, depthWrite: false
+            });
+            const orbit2Particles = new THREE.Points(orbit2Geo, orbit2Mat);
+            orbit2Particles.rotation.x = Math.PI * 0.35;
+            orbit2Particles.rotation.z = -Math.PI * 0.15;
+            globeGroup.add(orbit2Particles);
+
+            // Energy arcs
+            const arcLines = [];
+            const arcBaseMat = new THREE.LineBasicMaterial({
+                color: 0xC5A059, transparent: true, opacity: 0, blending: THREE.AdditiveBlending
+            });
+            for (let i = 0; i < 5; i++) {
+                const arcGeo = new THREE.BufferGeometry();
+                const arcPositions = new Float32Array(20 * 3);
+                arcGeo.setAttribute('position', new THREE.BufferAttribute(arcPositions, 3));
+                const arcLine = new THREE.Line(arcGeo, arcBaseMat.clone());
+                arcLine.userData = { active: false, life: 0, maxLife: 0, fromIdx: 0, toIdx: 0 };
+                globeGroup.add(arcLine);
+                arcLines.push(arcLine);
+            }
+            let lastArcTime = 0;
+
             // Mouse & Scroll
             let mouseX = 0, mouseY = 0, targetMX = 0, targetMY = 0;
-            let scrollY = 0, scrollTarget = 0, scrollVel = 0;
+            let scrollVel = 0;
 
             document.addEventListener('mousemove', (e) => {
                 targetMX = (e.clientX / window.innerWidth) * 2 - 1;
@@ -598,23 +975,59 @@
                 globeGroup.position.x = 2.0 - progress * 2.0;
                 globeGroup.position.y = -progress * 0.7;
 
-                const breathe = 1 + Math.sin(time * 0.7) * 0.012;
+                // Breathing
+                const breathe = 1 + Math.sin(time * 0.7) * 0.025;
                 core.scale.setScalar(breathe);
+                // Inner glow: dim at top (bright sun outside), brighter at bottom (sun faded, earth glows)
+                innerGlowMat.opacity = 0.02 + progress * 0.06;
+                innerGlow.scale.setScalar(breathe * (0.95 + progress * 0.15));
 
-                globeGroup.rotation.y += 0.0012;
+                // Sunshine atmosphere: animated solar surface, fades to evening as we scroll
+                const atmoPulse = 1.0 + Math.sin(time * 0.5) * 0.04;
+                // Scale: subtle breathing, no dramatic change
+                const atmoScale = atmoPulse * (1.02 - progress * 0.08);
+                atmoMesh.scale.setScalar(atmoScale);
+                // Pass time and progress to shader for animated sunshine + evening fade
+                atmoMat.uniforms.uTime.value = time;
+                atmoMat.uniforms.uProgress.value = progress;
+
+                // Rotation
+                globeGroup.rotation.y += 0.0008;
                 globeGroup.rotation.x = mouseY * 0.1;
                 globeGroup.rotation.z = mouseX * 0.05;
 
+                // Rings: start bright/warm, get cooler/dimmer as we scroll
                 ring.rotation.x = Math.PI/2 + time * 0.12;
                 ring.rotation.y = time * 0.07;
+                ring2.rotation.x = Math.PI/2.5 + time * 0.08;
+                ring2.rotation.z = -Math.PI*0.15 + time * 0.04;
+                // Ring opacity: bright at top, dim at bottom
+                ringMat.opacity = 0.30 - progress * 0.20;
+                ring2Mat.opacity = 0.15 - progress * 0.10;
+                // Ring color: warm at top, cooler at bottom
+                const ringR = 0.92 - progress * 0.18;
+                const ringG = 0.75 - progress * 0.15;
+                const ringB = 0.45 - progress * 0.12;
+                ringMat.color.setRGB(ringR, ringG, ringB);
+                ring2Mat.color.setRGB(ringR, ringG, ringB);
 
+                // Scroll-reactive wireframe: starts bright/warm, gets cooler/dimmer
+                gridMat.opacity = 0.26 - progress * 0.18;
+                // Shift color from bright champagne to dark bronze as we scroll
+                const r = 0.92 - progress * 0.20;
+                const g = 0.75 - progress * 0.18;
+                const b = 0.45 - progress * 0.15;
+                gridMat.color.setRGB(r, g, b);
+
+                // Sprites: start bright, get dimmer as we scroll
                 sprites.forEach(s => {
                     const pulse = Math.sin(time * s.userData.speed + s.userData.phase) * 0.4 + 0.6;
-                    s.material.opacity = pulse * 0.55;
+                    s.material.opacity = pulse * (0.90 - progress * 0.50);
                     const sc = 0.055 * (0.7 + pulse * 0.5);
                     s.scale.set(sc, sc, sc);
                 });
 
+                // Particles
                 const positions = particles.geometry.attributes.position.array;
                 for (let i = 0; i < pCount; i++) {
                     positions[i*3] += pVel[i].x + mouseX * 0.004;
@@ -628,8 +1041,68 @@
                 }
                 particles.geometry.attributes.position.needsUpdate = true;
 
-                camera.position.x = mouseX * 0.5;
-                camera.position.y = mouseY * 0.5;
+                // Orbital ring 1
+                const oPositions = orbitParticles.geometry.attributes.position.array;
+                for (let i = 0; i < orbitCount; i++) {
+                    const d = orbitData[i];
+                    const a = d.angle + time * d.speed;
+                    const pulse = 1 + Math.sin(time * 2 + d.offset) * 0.05;
+                    oPositions[i*3] = Math.cos(a) * d.radius * pulse;
+                    oPositions[i*3+2] = Math.sin(a) * d.radius * pulse;
+                }
+                orbitParticles.geometry.attributes.position.needsUpdate = true;
+                orbitParticles.rotation.y = time * 0.08;
+
+                // Orbital ring 2
+                const o2Positions = orbit2Particles.geometry.attributes.position.array;
+                for (let i = 0; i < orbit2Count; i++) {
+                    const d = orbit2Data[i];
+                    const a = d.angle - time * d.speed;
+                    const pulse2 = 1 + Math.sin(time * 1.5 + d.offset) * 0.04;
+                    o2Positions[i*3] = Math.cos(a) * d.radius * pulse2;
+                    o2Positions[i*3+2] = Math.sin(a) * d.radius * pulse2;
+                }
+                orbit2Particles.geometry.attributes.position.needsUpdate = true;
+                orbit2Particles.rotation.y = -time * 0.06;
+
+                // Energy arcs
+                if (time - lastArcTime > 1.2 + Math.random() * 2) {
+                    lastArcTime = time;
+                    const inactive = arcLines.find(a => !a.userData.active);
+                    if (inactive) {
+                        const fromIdx = Math.floor(Math.random() * nodeCount);
+                        const toIdx = Math.floor(Math.random() * nodeCount);
+                        if (fromIdx !== toIdx) {
+                            inactive.userData.active = true;
+                            inactive.userData.life = 0;
+                            inactive.userData.maxLife = 0.8 + Math.random() * 0.6;
+                            const from = nodePositions[fromIdx].clone().multiplyScalar(1.05);
+                            const to = nodePositions[toIdx].clone().multiplyScalar(1.05);
+                            const mid = from.clone().add(to).multiplyScalar(0.5).normalize().multiplyScalar(1.35);
+                            const aPos = inactive.geometry.attributes.position.array;
+                            for (let j = 0; j < 20; j++) {
+                                const t = j / 19;
+                                const mt = 1 - t;
+                                aPos[j*3] = mt*mt*from.x + 2*mt*t*mid.x + t*t*to.x;
+                                aPos[j*3+1] = mt*mt*from.y + 2*mt*t*mid.y + t*t*to.y;
+                                aPos[j*3+2] = mt*mt*from.z + 2*mt*t*mid.z + t*t*to.z;
+                            }
+                            inactive.geometry.attributes.position.needsUpdate = true;
+                        }
+                    }
+                }
+                arcLines.forEach(arc => {
+                    if (arc.userData.active) {
+                        arc.userData.life += 0.016;
+                        const ap = arc.userData.life / arc.userData.maxLife;
+                        if (ap >= 1) { arc.userData.active = false; arc.material.opacity = 0; }
+                        else { arc.material.opacity = Math.sin(ap * Math.PI) * 0.6; }
+                    }
+                });
+
+                // Parallax
+                camera.position.x = mouseX * 0.7;
+                camera.position.y = mouseY * 0.7;
                 camera.lookAt(globeGroup.position);
 
                 renderer.render(scene, camera);
@@ -761,10 +1234,34 @@
             });
         });
 
-        // === SCROLL EFFECTS ===
+        // === SCROLL PROGRESS & EFFECTS ===
         const aurora = document.getElementById('aurora');
-        let scrollTick = false;
         const nav = document.querySelector('nav');
+        const scrollProgress = document.getElementById('scrollProgress');
+        const scrollIndicator = document.getElementById('scrollIndicator');
+        const scrollWarmth = document.getElementById('scrollWarmth');
+        const navLinks = document.querySelectorAll('.nav-links a');
+        const sections = document.querySelectorAll('section[id]');
+        let scrollTick = false;
+
+        setTimeout(() => {
+            if (scrollIndicator) scrollIndicator.classList.add('visible');
+        }, 3000);
+
+        function updateActiveSection() {
+            let current = '';
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= window.innerHeight * 0.4 && rect.bottom >= window.innerHeight * 0.4) {
+                    current = section.getAttribute('id');
+                }
+            });
+            if (current) {
+                navLinks.forEach(link => {
+                    link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+                });
+            }
+        }
 
         window.addEventListener('scroll', () => {
             if (!scrollTick) {
@@ -772,43 +1269,77 @@
                     const max = document.body.scrollHeight - window.innerHeight;
                     const p = max > 0 ? window.scrollY / max : 0;
 
+                    // Scroll progress bar
+                    if (scrollProgress) scrollProgress.style.width = (p * 100) + '%';
+
+                    // Scroll warmth overlay (dual-tone effect)
+                    // p = 0 at top, p = 1 at bottom
+                    // Opacity ramps from 0 to 1 as you scroll
+                    if (scrollWarmth) scrollWarmth.style.opacity = Math.min(p * 1.0, 1.0);
+
+                    // Hide scroll indicator
+                    if (scrollIndicator && window.scrollY > 100) {
+                        scrollIndicator.classList.remove('visible');
+                        scrollIndicator.style.opacity = '0';
+                    }
+
+                    // Aurora
                     const ax = -50 + Math.sin(p * Math.PI) * 30;
                     const ay = -40 + p * 130;
                     aurora.style.transform = `translate(${ax}%, ${ay}%) scale(${1 + p * 0.45})`;
 
-                    const vel = Math.abs(scrollTarget - scrollY);
-                    const aberration = Math.min(vel * 0.12, 3);
-                    document.documentElement.style.setProperty('--aberration', `${aberration}px`);
-                    if (aberration > 0.5) document.body.classList.add('chromatic');
-                    else document.body.classList.remove('chromatic');
-
+                    // Nav shrink
                     if (window.scrollY > 80) nav.classList.add('scrolled');
                     else nav.classList.remove('scrolled');
+
+                    // Active section
+                    updateActiveSection();
 
                     scrollTick = false;
                 });
                 scrollTick = true;
             }
-        });
+        }, { passive: true });
 
-        // === LIQUID BACKGROUND ===
-        document.addEventListener('mousemove', (e) => {
-            const x = (e.clientX / window.innerWidth) * 100;
-            const y = (e.clientY / window.innerHeight) * 100;
-            document.body.style.background = `
-                radial-gradient(circle at ${x}% ${y}%, rgba(197, 160, 89, 0.07) 0%, transparent 50%),
-                radial-gradient(circle at ${100-x}% ${100-y}%, rgba(26, 26, 26, 0.015) 0%, transparent 50%),
-                #F7F5F0
-            `;
-        });
+        // === HAMBURGER MENU ===
+        const hamburger = document.getElementById('hamburger');
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (hamburger && mobileMenu) {
+            hamburger.addEventListener('click', () => {
+                hamburger.classList.toggle('open');
+                mobileMenu.classList.toggle('open');
+                document.body.style.overflow = mobileMenu.classList.contains('open') ? 'hidden' : '';
+            });
+            mobileMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    hamburger.classList.remove('open');
+                    mobileMenu.classList.remove('open');
+                    document.body.style.overflow = '';
+                    const target = document.querySelector(link.getAttribute('href'));
+                    if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+                });
+            });
+        }
 
         // === SMOOTH ANCHOR ===
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
+                // Skip mobile menu links (handled separately)
+                if (this.closest('#mobileMenu')) return;
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
                 if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
+        });
+
+        // === KEYBOARD NAV ===
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && mobileMenu.classList.contains('open')) {
+                hamburger.classList.remove('open');
+                mobileMenu.classList.remove('open');
+                document.body.style.overflow = '';
+            }
         });
     })();
     </script>
